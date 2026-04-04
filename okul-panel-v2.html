@@ -754,7 +754,44 @@ function renderOgrenciListe() {
     </div>`).join("");
 }
 
-// ── ETÜT ÖĞRENCİ SEÇİMİ ──
+// ── ETÜT ÖĞRENCİ SEÇİMİ (Çoklu Sınıf) ──
+let seciliOgrencilerMap = {};
+
+window.openEtutForm = (etut) => {
+  seciliOgrencilerMap = {};
+  document.getElementById("etutEditId").value = etut ? etut.id : "";
+  document.getElementById("etutFormTitle").textContent = etut ? "Etüt Düzenle" : "Yeni Etüt / Deneme";
+  if (etut) {
+    document.getElementById("eTur").value = etut.tur||"etut";
+    document.getElementById("eBaslik").value = etut.baslik||"";
+    document.getElementById("eDers").value = etut.ders||"";
+    document.getElementById("eTarih").value = etut.tarih||"";
+    document.getElementById("eSaat").value = etut.saat||"";
+    document.getElementById("eOgretmen").value = etut.ogretmen||"";
+    document.getElementById("eYer").value = etut.yer||"";
+    document.getElementById("eAciklama").value = etut.aciklama||"";
+    if (etut.ogrencilerDetay) {
+      etut.ogrencilerDetay.forEach(o => { seciliOgrencilerMap[o.email] = o; });
+    } else if (etut.ogrenciler) {
+      etut.ogrenciler.forEach(email => { seciliOgrencilerMap[email] = {email, ad:email, sinif:"", numara:""}; });
+    }
+    renderSeciliOgrenciler();
+  } else {
+    ["eBaslik","eSaat","eYer","eAciklama"].forEach(id => document.getElementById(id).value="");
+    document.getElementById("eTarih").value="";
+    const box = document.getElementById("seciliOgrencilerBox");
+    if(box) box.style.display="none";
+  }
+  document.getElementById("eOgrenciSecimBox").style.display="none";
+  document.getElementById("eSinifSec").value="";
+  document.getElementById("etutForm").classList.add("open");
+};
+
+window.closeEtutForm = () => {
+  document.getElementById("etutForm").classList.remove("open");
+  seciliOgrencilerMap = {};
+};
+
 window.loadEtutOgrenciler = () => {
   const sinif=document.getElementById("eSinifSec").value;
   const box=document.getElementById("eOgrenciSecimBox");
