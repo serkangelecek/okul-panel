@@ -977,28 +977,41 @@ window.listenEtut = function() {
     items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
     const grid=document.getElementById("etutGrid");
     if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Etkinlik bulunamadı</div>';return;}
-    grid.innerHTML=items.map(e=>`
-      <div class="item-card etut-border">
-        <span class="tur-badge ${e.tur==="etut"?"tb-etut":"tb-deneme"}">${e.tur==="etut"?"📚 Etüt":"📝 Deneme"}</span>
-        <div class="i-ders" style="font-size:17px">${e.baslik}</div>
-        <div class="i-sinif">${e.ders||""}</div>
-        <div class="i-row"><span class="i-label">📅</span><span class="i-val">${e.tarih||""}</span></div>
-        <div class="i-row"><span class="i-label">🕐</span><span class="i-val">${e.saat||""}</span></div>
-        <div class="i-row"><span class="i-label">👤</span><span class="i-val">${e.ogretmen||""}</span></div>
-        <div class="i-row"><span class="i-label">🏫</span><span class="i-val">${e.yer||""}</span></div>
-        ${e.ogrenciler&&e.ogrenciler.length?`
-          <div style="margin-top:8px;font-size:11px;color:var(--muted)">👨‍🎓 ${e.ogrenciler.length} öğrenci</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-            ${(e.ogrencilerDetay||[]).slice(0,5).map(o=>`<span style="background:rgba(16,185,129,0.1);border-radius:4px;padding:2px 6px;font-size:11px;color:#6ee7b7">${o.ad.split(" ")[0]}</span>`).join("")}
-            ${(e.ogrencilerDetay||[]).length>5?`<span style="font-size:11px;color:var(--muted)">+${(e.ogrencilerDetay||[]).length-5}</span>`:""}
-          </div>` : ""}
-        ${e.aciklama?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${e.aciklama}</div>`:""}
+    grid.style.gridTemplateColumns = "1fr";
+    grid.innerHTML=items.map(e=>{
+      const ogrList = e.ogrencilerDetay||[];
+      return `<div class="item-card etut-border" style="display:flex;gap:16px;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <span class="tur-badge ${e.tur==="etut"?"tb-etut":"tb-deneme"}">${e.tur==="etut"?"📚 Etüt":"📝 Deneme"}</span>
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">${e.baslik}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;font-size:13px;margin-bottom:10px">
+            <div>📚 ${e.ders||"—"}</div>
+            <div>📅 ${e.tarih||"—"}</div>
+            <div>🕐 ${e.saat||"—"}</div>
+            <div>🏫 ${e.yer||"—"}</div>
+            <div style="grid-column:1/-1">👤 ${e.ogretmen||"—"}</div>
+          </div>
+          ${e.aciklama?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${e.aciklama}</div>`:""}
+          ${ogrList.length?`
+            <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:8px;padding:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px">👨‍🎓 ${ogrList.length} Öğrenci</div>
+              ${ogrList.map(o=>`
+                <div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+                  <span style="color:var(--muted);width:28px;text-align:right;flex-shrink:0">${o.numara||""}</span>
+                  <span style="flex:1">${o.ad}</span>
+                  <span style="font-size:11px;color:var(--muted)">${o.sinif||""}</span>
+                </div>`).join("")}
+            </div>`:""}
+        </div>
         ${isKoord()?`
-          <div style="display:flex;gap:6px;margin-top:12px">
-            <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="editEtut('${e.id}')">✏️ Düzenle</button>
-            <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center" onclick="delDoc('etut','${e.id}')">🗑 Sil</button>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" onclick="editEtut('${e.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="delDoc('etut','${e.id}')">🗑</button>
           </div>`:""}
-      </div>`).join("");
+      </div>`;
+    }).join("");
   });
 }
 
