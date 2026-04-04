@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OkulPanel</title>
   <meta name="theme-color" content="#0f1b35">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -810,6 +813,20 @@ window.loadEtutOgrenciler = () => {
 
 window.toggleOgrenci = id => {
   const chk=document.getElementById(id); if(chk){chk.checked=!chk.checked;updateSecimInfo();}
+};
+
+window.secilenleriEkle = () => {
+  document.querySelectorAll("#eOgrenciList input[type=checkbox]").forEach(c => {
+    if (c.checked) {
+      seciliOgrencilerMap[c.value] = {email:c.value, ad:c.dataset.ad, sinif:c.dataset.sinif, numara:c.dataset.numara};
+    } else {
+      delete seciliOgrencilerMap[c.value];
+    }
+  });
+  renderSeciliOgrenciler();
+  document.getElementById("eOgrenciSecimBox").style.display="none";
+  document.getElementById("eSinifSec").value="";
+  toast(Object.keys(seciliOgrencilerMap).length + " öğrenci seçildi");
 };
 
 window.tumunuSec = durum => {
