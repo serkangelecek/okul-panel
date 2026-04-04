@@ -528,6 +528,15 @@
         </div>
       </div>
       <div class="card">
+        <div class="card-title">🔒 İzin Verilen E-posta Domainleri</div>
+        <div class="warn-box">⚠️ Bu listede en az bir domain varsa, yalnızca bu domainlerden giriş kabul edilir. Liste boşsa kısıtlama uygulanmaz.</div>
+        <div class="tanim-list" id="izinliDomainList"></div>
+        <div class="tanim-input-row">
+          <input class="finput" id="yeniDomain" placeholder="gelecekkoleji.k12.tr, okul.edu.tr..." style="max-width:280px">
+          <button class="btn btn-primary btn-sm" onclick="addTanim('izinliDomainler','yeniDomain')">+ Ekle</button>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-title">👨‍🎓 Öğrenci Listesi (Excel)</div>
         <div class="info-box">📋 Format: <strong>Ad Soyad | E-posta | Sınıf | Numara</strong></div>
         <div class="excel-zone" onclick="document.getElementById('ogrenciExcelFile').click()">
@@ -537,8 +546,24 @@
           <input type="file" id="ogrenciExcelFile" accept=".xlsx,.xls" style="display:none" onchange="handleOgrenciExcel(this)">
         </div>
         <div id="ogrenciExcelPreview" style="margin-top:12px"></div>
-        <div style="margin-top:14px">
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="togglePanel('tekOgrenciForm')">➕ Tek Öğrenci Ekle</button>
           <button class="btn btn-ghost btn-sm" onclick="togglePanel('ogrenciListeForm')">👁️ Mevcut Listeyi Gör</button>
+        </div>
+        <div class="form-panel card" id="tekOgrenciForm" style="margin-top:12px">
+          <div class="card-title">Tek Öğrenci Ekle</div>
+          <div class="form-grid">
+            <div class="fg"><label class="flabel">Ad Soyad</label><input class="finput" id="toAd" placeholder="Ahmet Yılmaz"></div>
+            <div class="fg"><label class="flabel">E-posta</label><input class="finput" id="toEmail" placeholder="ahmet@okul.k12.tr" type="email"></div>
+            <div class="fg"><label class="flabel">Sınıf</label>
+              <select class="fselect" id="toSinif"><option value="">— Seçin —</option></select>
+            </div>
+            <div class="fg"><label class="flabel">Öğrenci Numarası</label><input class="finput" id="toNumara" placeholder="1234"></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="addTekOgrenci()">💾 Kaydet</button>
+            <button class="btn btn-ghost btn-sm" onclick="togglePanel('tekOgrenciForm')">İptal</button>
+          </div>
         </div>
         <div class="form-panel" id="ogrenciListeForm" style="margin-top:12px">
           <div id="ogrenciListeTable"><div class="loading-txt">⏳ Yükleniyor...</div></div>
@@ -633,7 +658,20 @@ onAuthStateChanged(auth, async user => {
 
 async function loadUser(user) {
   currentUser = user;
-  if (user.email === ADMIN_EMAIL) {
+  // Domain kontrolü
+  if (user.email !== ADMIN_EMAIL) {
+    const domSnap = await getDoc(doc(db,"tanimlar","izinliDomainler"));
+    const domListe = domSnap.exists() ? (domSnap.data().liste||[]) : [];
+    if (domListe.length > 0) {
+      const userDomain = user.email.split("@")[1]||"";
+      if (!domListe.includes(userDomain)) {
+        hideEl("loadingPage");
+        alert("❌ Bu e-posta domainine giriş izni verilmemiş: @" + userDomain);
+        await signOut(auth);
+        return;
+      }
+    }
+  }
     currentRole = "admin";
     await setDoc(doc(db,"users",user.uid),{email:user.email,displayName:user.displayName,photoURL:user.photoURL,rol:"admin"},{merge:true});
   } else {
@@ -745,7 +783,9 @@ const tanimlarConfig = {
   konumlar: {listEl:"konumTanimList", delFn:"delTanim_konumlar"},
   denemeTurleri: {listEl:"denemeTurList", delFn:"delTanim_denemeTurleri"},
   denemeSeri: {listEl:"denemeSeriList", delFn:"delTanim_denemeSeri"},
+  izinliDomainler: {listEl:"izinliDomainList", delFn:"delTanim_izinliDomainler"},
 };
+let izinliDomainler = [];
 
 function loadTanimlar() {
   Object.keys(tanimlarConfig).forEach(key => {
@@ -756,6 +796,7 @@ function loadTanimlar() {
       if (key==="konumlar") { konumlar = liste; updateKonumSelect(); }
       if (key==="denemeTurleri") { denemeTurleri = liste; updateDenemeSelects(); }
       if (key==="denemeSeri") { denemeSeri = liste; updateDenemeSelects(); }
+      if (key==="izinliDomainler") { izinliDomainler = liste; }
       renderTanimList(tanimlarConfig[key].listEl, liste, tanimlarConfig[key].delFn);
       updateMainSelects();
       if (isManager()) renderKullanicilar();
@@ -826,6 +867,11 @@ function updateSinifCheckboxes() {
   const cur = eSinifSec.value;
   eSinifSec.innerHTML = '<option value="">— Sınıf seçin —</option>';
   siniflar.forEach(s => eSinifSec.innerHTML += '<option value="'+s+'" '+(s===cur?'selected':'')+'>'+s+'</option>');
+  // Tek öğrenci sınıf select
+  const toSinifEl = document.getElementById("toSinif"); if(!toSinifEl) return;
+  const curTo = toSinifEl.value;
+  toSinifEl.innerHTML = '<option value="">— Seçin —</option>';
+  siniflar.forEach(s => toSinifEl.innerHTML += '<option value="'+s+'" '+(s===curTo?'selected':'')+'>'+s+'</option>');
 }
 
 function updateKonumSelect() {
@@ -1373,6 +1419,7 @@ function renderKullanicilar() {
         html += '</select>';
       }
       html += '</div>';
+      html += '<button class="btn btn-danger btn-sm" onclick="silKullanici(\''+u.uid+'\')" title="Kullanıcıyı sil" style="flex-shrink:0">🗑</button>';
     }
     html += '</div>';
   });
@@ -1386,6 +1433,26 @@ window.updateRol = async function(uid,rol) {
 };
 window.updateBrans = async function(uid,brans) { await setDoc(doc(db,"users",uid),{brans},{merge:true}); toast("Branş güncellendi!"); };
 window.updateSinif = async function(uid,sinif) { await setDoc(doc(db,"users",uid),{sinif},{merge:true}); toast("Sınıf güncellendi!"); };
+window.silKullanici = async function(uid) {
+  if (!confirm("Bu kullanıcıyı sistemden silmek istediğinize emin misiniz?")) return;
+  await deleteDoc(doc(db,"users",uid));
+  toast("Kullanıcı silindi!");
+};
+
+window.addTekOgrenci = async function() {
+  const ad = document.getElementById("toAd").value.trim();
+  const email = document.getElementById("toEmail").value.trim();
+  const sinif = document.getElementById("toSinif").value;
+  const numara = document.getElementById("toNumara").value.trim();
+  if (!ad || !email || !sinif) { toast("Ad, e-posta ve sınıf zorunludur!"); return; }
+  await addDoc(collection(db,"ogrenciler"), {ad, email, sinif, numara});
+  document.getElementById("toAd").value="";
+  document.getElementById("toEmail").value="";
+  document.getElementById("toSinif").value="";
+  document.getElementById("toNumara").value="";
+  togglePanel("tekOgrenciForm");
+  toast("Öğrenci eklendi!");
+};
 
 // ── YÖNETİM ──
 function listenStats() {
@@ -1424,8 +1491,8 @@ window.addEventListener('load', () => {
     'tumunuSec','secilenleriEkle','ogrenciCikar','renderSeciliOgrenciler',
     'openDenemeForm','closeDenemeForm','saveDeneme','editDeneme',
     'selectProgSinif','handleExcel','handleOgrenciExcel',
-    'updateRol','updateBrans','updateSinif','delDoc','addTanim',
-    'saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
+    'updateRol','updateBrans','updateSinif','silKullanici','delDoc','addTanim',
+    'addTekOgrenci','saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
   const missing = required.filter(f => typeof window[f] !== 'function');
   if (missing.length) console.error('Eksik fonksiyonlar:', missing);
   else console.log('✅ Tüm fonksiyonlar tanımlı');
