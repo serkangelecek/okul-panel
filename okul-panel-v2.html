@@ -953,17 +953,20 @@ window.addNobet=async()=>{
 // ── SINAVLAR ──
 window.listenSinavlar = function() {
   onSnapshot(collection(db,"sinavlar"), snap => {
-    let items=snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(currentRole==="ogrenci"&&currentSinif) items=items.filter(s=>s.siniflar&&s.siniflar.includes(currentSinif));
-    if(["ogretmen","koordinator"].includes(currentRole)) items=items.filter(s=>s.ogretmenEmail===currentUser.email||s.ogretmen===currentUser.displayName);
-    items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
-    const grid=document.getElementById("sinavGrid");
-    if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Sınav bulunamadı</div>';return;}
+    let items = snap.docs.map(d => ({id:d.id,...d.data()}));
+    if (currentRole==="ogrenci" && currentSinif)
+      items = items.filter(s => s.siniflar && s.siniflar.includes(currentSinif));
+    if (["ogretmen","koordinator"].includes(currentRole))
+      items = items.filter(s => s.ogretmenEmail===currentUser.email || s.ogretmen===currentUser.displayName);
+    items.sort((a,b) => (a.tarih||"").localeCompare(b.tarih||""));
+    const grid = document.getElementById("sinavGrid");
+    if (!items.length) { grid.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Sınav bulunamadı</div>'; return; }
     const bugun = new Date(); bugun.setHours(0,0,0,0);
-    const turLabels = {yazili:"📝 Yazılı",ulke:"🇹🇷 Ülke Geneli",konusma:"🗣️ Konuşma",dinleme:"👂 Dinleme"};
-    grid.innerHTML=items.map(s=>{
+    const turLabels = {yazili:"📝 Yazılı", ulke:"🇹🇷 Ülke Geneli", konusma:"🗣️ Konuşma", dinleme:"👂 Dinleme"};
+    let html = "";
+    items.forEach(s => {
       const tarihDate = s.tarih ? new Date(s.tarih) : null;
-      const kalanGun = tarihDate ? Math.ceil((tarihDate-bugun)/(1000*60*60*24)) : null;
+      const kalanGun = tarihDate ? Math.ceil((tarihDate - bugun) / (1000*60*60*24)) : null;
       const gecti = kalanGun !== null && kalanGun < 0;
       const bugunMu = kalanGun === 0;
       const yakin = kalanGun !== null && kalanGun > 0 && kalanGun <= 7;
@@ -975,31 +978,36 @@ window.listenSinavlar = function() {
         else if (yakin) kalanBadge = '<span style="background:rgba(245,158,11,0.2);color:#fcd34d;font-size:11px;padding:2px 8px;border-radius:6px">' + kalanGun + ' gün kaldı</span>';
         else kalanBadge = '<span style="background:rgba(16,185,129,0.1);color:#6ee7b7;font-size:11px;padding:2px 8px;border-radius:6px">' + kalanGun + ' gün kaldı</span>';
       }
-      return '<div class="item-card" style="border-left:4px solid ' + (isUlke?"#f59e0b":gecti?"#475569":"#3b82f6") + '">' +
-        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">' +
-          '<div>' +
-            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-              '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:17px">' + s.ders + '</span>' +
-              '<span style="background:rgba(255,255,255,0.08);font-size:11px;padding:2px 8px;border-radius:6px">' + (turLabels[s.tur]||"📋 Sınav") + '</span>' +
-              (isUlke ? '<button onclick="sinavUyari()" style="background:rgba(239,68,68,0.2);border:none;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#fca5a5">⚠️</button>' : '') +
-            '</div>' +
-            '<div style="font-size:12px;color:var(--muted);margin-top:4px">👤 ' + (s.ogretmen||"—") + '</div>' +
-          '</div>' +
-          kalanBadge +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:13px;margin-bottom:10px">' +
-          '<div>📅 ' + (s.tarih||"—") + '</div>' +
-          '<div>🕐 ' + (s.saat||"—") + '</div>' +
-          '<div>⏱ ' + (s.sure||"—") + '</div>' +
-          '<div>🏫 ' + (s.salon||"—") + '</div>' +
-        '</div>' +
-        (s.siniflar&&s.siniflar.length ? 
-          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">' +
-            s.siniflar.map(sf => '<span style="background:rgba(30,58,138,0.35);color:#93c5fd;font-size:12px;padding:3px 10px;border-radius:6px;font-weight:600">' + sf + '</span>').join("") +
-          '</div>' : '') +
-        (isManager() ? '<button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="delDoc(\'sinavlar\',\''+s.id+'\')">🗑 Sil</button>' : '') +
-      '</div>';
-    }).join("");
+      let siniflarHtml = "";
+      if (s.siniflar && s.siniflar.length) {
+        s.siniflar.forEach(sf => {
+          siniflarHtml += '<span style="background:rgba(30,58,138,0.35);color:#93c5fd;font-size:12px;padding:3px 10px;border-radius:6px;font-weight:600">' + sf + '</span>';
+        });
+        siniflarHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">' + siniflarHtml + '</div>';
+      }
+      let silBtn = "";
+      if (isManager()) {
+        silBtn = '<button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="delDoc('sinavlar','' + s.id + '')">🗑 Sil</button>';
+      }
+      let uyariBtn = isUlke ? '<button onclick="sinavUyari()" style="background:rgba(239,68,68,0.2);border:none;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#fca5a5">⚠️</button>' : '';
+      html += '<div class="item-card" style="border-left:4px solid ' + (isUlke ? "#f59e0b" : gecti ? "#475569" : "#3b82f6") + '">';
+      html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">';
+      html += '<div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+      html += '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:17px">' + s.ders + '</span>';
+      html += '<span style="background:rgba(255,255,255,0.08);font-size:11px;padding:2px 8px;border-radius:6px">' + (turLabels[s.tur] || "📋 Sınav") + '</span>';
+      html += uyariBtn;
+      html += '</div><div style="font-size:12px;color:var(--muted);margin-top:4px">👤 ' + (s.ogretmen||"—") + '</div></div>';
+      html += kalanBadge + '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:13px;margin-bottom:10px">';
+      html += '<div>📅 ' + (s.tarih||"—") + '</div>';
+      html += '<div>🕐 ' + (s.saat||"—") + '</div>';
+      html += '<div>⏱ ' + (s.sure||"—") + '</div>';
+      html += '<div>🏫 ' + (s.salon||"—") + '</div></div>';
+      html += siniflarHtml;
+      html += silBtn;
+      html += '</div>';
+    });
+    grid.innerHTML = html;
   });
 };
 
