@@ -287,20 +287,30 @@
       <div class="card form-panel" id="sinavForm">
         <div class="card-title">Yeni Sınav</div>
         <div class="form-grid">
+          <div class="fg"><label class="flabel">Sınav Türü</label>
+            <select class="fselect" id="sTur">
+              <option value="yazili">📝 Yazılı Sınav</option>
+              <option value="ulke">🇹🇷 Ülke Geneli Sınav</option>
+              <option value="konusma">🗣️ Konuşma Sınavı</option>
+              <option value="dinleme">👂 Dinleme Sınavı</option>
+            </select></div>
           <div class="fg"><label class="flabel">Ders / Branş</label><select class="fselect" id="sDers"><option value="">Seçin...</option></select></div>
-          <div class="fg"><label class="flabel">Sınıf</label><select class="fselect" id="sSinif"><option value="">Seçin...</option></select></div>
           <div class="fg"><label class="flabel">Tarih</label><input class="finput" type="date" id="sTarih"></div>
           <div class="fg"><label class="flabel">Saat</label><input class="finput" id="sSaat" placeholder="09:00"></div>
           <div class="fg"><label class="flabel">Süre</label><input class="finput" id="sSure" placeholder="90 dk"></div>
           <div class="fg"><label class="flabel">Salon</label><input class="finput" id="sSalon" placeholder="D101"></div>
           <div class="fg full"><label class="flabel">Öğretmen</label><select class="fselect" id="sOgretmen"><option value="">Seçin...</option></select></div>
+          <div class="fg full">
+            <label class="flabel">Sınıflar (birden fazla seçilebilir)</label>
+            <div id="sSinifSecim" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:10px;padding:10px;min-height:42px"></div>
+          </div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px">
           <button class="btn btn-primary" onclick="addSinav()">Kaydet</button>
           <button class="btn btn-ghost" onclick="togglePanel('sinavForm')">İptal</button>
         </div>
       </div>
-      <div class="card-grid" id="sinavGrid"><div class="loading-txt">⏳ Yükleniyor...</div></div>
+      <div id="sinavGrid" style="display:flex;flex-direction:column;gap:12px"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
 
     <!-- ETÜT & DENEME -->
@@ -669,11 +679,15 @@ window.updateSelects = function() {
     const cur=el.value; el.innerHTML=`<option value="">Seçin...</option>`;
     dersBranslar.forEach(d=>el.innerHTML+=`<option value="${d}" ${d===cur?"selected":""}>${d}</option>`);
   });
-  ["sSinif"].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    const cur=el.value; el.innerHTML=`<option value="">Seçin...</option>`;
-    siniflar.forEach(s=>el.innerHTML+=`<option value="${s}" ${s===cur?"selected":""}>${s}</option>`);
-  });
+  // Sınav için checkbox listesi
+  const sSinifSecim = document.getElementById("sSinifSecim");
+  if (sSinifSecim) {
+    sSinifSecim.innerHTML = siniflar.map(s =>
+      '<label style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid var(--card-border);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px">' +
+      '<input type="checkbox" value="' + s + '" style="accent-color:var(--accent)"> ' + s +
+      '</label>'
+    ).join("");
+  }
   // Etüt sınıf select
   const eSinifSec=document.getElementById("eSinifSec"); if(eSinifSec){
     const cur=eSinifSec.value; eSinifSec.innerHTML=`<option value="">— Sınıf seçin —</option>`;
@@ -940,29 +954,77 @@ window.addNobet=async()=>{
 window.listenSinavlar = function() {
   onSnapshot(collection(db,"sinavlar"), snap => {
     let items=snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(currentRole==="ogrenci"&&currentSinif) items=items.filter(s=>s.sinif===currentSinif);
+    if(currentRole==="ogrenci"&&currentSinif) items=items.filter(s=>s.siniflar&&s.siniflar.includes(currentSinif));
     if(["ogretmen","koordinator"].includes(currentRole)) items=items.filter(s=>s.ogretmenEmail===currentUser.email||s.ogretmen===currentUser.displayName);
     items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
     const grid=document.getElementById("sinavGrid");
     if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Sınav bulunamadı</div>';return;}
-    grid.innerHTML=items.map(s=>`
-      <div class="item-card">
-        <div class="i-ders">${s.ders}</div><div class="i-sinif">${s.sinif||""} • ${s.ogretmen||""}</div>
-        <div class="i-row"><span class="i-label">📅</span><span class="i-val">${s.tarih||""}</span></div>
-        <div class="i-row"><span class="i-label">🕐</span><span class="i-val">${s.saat||""}</span></div>
-        <div class="i-row"><span class="i-label">⏱</span><span class="i-val">${s.sure||""}</span></div>
-        <div class="i-row"><span class="i-label">🏫</span><span class="i-val">${s.salon||""}</span></div>
-        ${isManager()?`<button class="btn btn-danger btn-sm" style="margin-top:12px;width:100%;justify-content:center" onclick="delDoc('sinavlar','${s.id}')">🗑 Sil</button>`:""}
-      </div>`).join("");
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const turLabels = {yazili:"📝 Yazılı",ulke:"🇹🇷 Ülke Geneli",konusma:"🗣️ Konuşma",dinleme:"👂 Dinleme"};
+    grid.innerHTML=items.map(s=>{
+      const tarihDate = s.tarih ? new Date(s.tarih) : null;
+      const kalanGun = tarihDate ? Math.ceil((tarihDate-bugun)/(1000*60*60*24)) : null;
+      const gecti = kalanGun !== null && kalanGun < 0;
+      const bugunMu = kalanGun === 0;
+      const yakin = kalanGun !== null && kalanGun > 0 && kalanGun <= 7;
+      const isUlke = s.tur === "ulke";
+      let kalanBadge = "";
+      if (kalanGun !== null) {
+        if (gecti) kalanBadge = '<span style="background:rgba(100,116,139,0.3);color:#94a3b8;font-size:11px;padding:2px 8px;border-radius:6px">Geçti</span>';
+        else if (bugunMu) kalanBadge = '<span style="background:rgba(239,68,68,0.2);color:#fca5a5;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:700">⚡ Bugün!</span>';
+        else if (yakin) kalanBadge = '<span style="background:rgba(245,158,11,0.2);color:#fcd34d;font-size:11px;padding:2px 8px;border-radius:6px">' + kalanGun + ' gün kaldı</span>';
+        else kalanBadge = '<span style="background:rgba(16,185,129,0.1);color:#6ee7b7;font-size:11px;padding:2px 8px;border-radius:6px">' + kalanGun + ' gün kaldı</span>';
+      }
+      return '<div class="item-card" style="border-left:4px solid ' + (isUlke?"#f59e0b":gecti?"#475569":"#3b82f6") + '">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">' +
+          '<div>' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+              '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:17px">' + s.ders + '</span>' +
+              '<span style="background:rgba(255,255,255,0.08);font-size:11px;padding:2px 8px;border-radius:6px">' + (turLabels[s.tur]||"📋 Sınav") + '</span>' +
+              (isUlke ? '<button onclick="sinavUyari()" style="background:rgba(239,68,68,0.2);border:none;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;color:#fca5a5">⚠️</button>' : '') +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--muted);margin-top:4px">👤 ' + (s.ogretmen||"—") + '</div>' +
+          '</div>' +
+          kalanBadge +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:13px;margin-bottom:10px">' +
+          '<div>📅 ' + (s.tarih||"—") + '</div>' +
+          '<div>🕐 ' + (s.saat||"—") + '</div>' +
+          '<div>⏱ ' + (s.sure||"—") + '</div>' +
+          '<div>🏫 ' + (s.salon||"—") + '</div>' +
+        '</div>' +
+        (s.siniflar&&s.siniflar.length ? 
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">' +
+            s.siniflar.map(sf => '<span style="background:rgba(30,58,138,0.35);color:#93c5fd;font-size:12px;padding:3px 10px;border-radius:6px;font-weight:600">' + sf + '</span>').join("") +
+          '</div>' : '') +
+        (isManager() ? '<button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="delDoc('sinavlar','' + s.id + '')">🗑 Sil</button>' : '') +
+      '</div>';
+    }).join("");
   });
-}
-window.addSinav=async()=>{
-  const ders=document.getElementById("sDers").value,tarih=document.getElementById("sTarih").value;
+};
+
+window.sinavUyari = function() {
+  alert("🇹🇷 ÜLKE GENELİ SINAV UYARISI\n\nBu sınav belirlenen günde yapılacak olup mazeretsiz sınav tekrarı yapılmayacaktır.\n\nSınava giremeyen öğrencilerin resmi sağlık raporu getirmesi zorunludur.");
+};
+
+window.addSinav = async () => {
+  const ders=document.getElementById("sDers").value, tarih=document.getElementById("sTarih").value;
   if(!ders||!tarih){toast("Ders ve tarih zorunlu!");return;}
   const og=document.getElementById("sOgretmen").value;
   const ogObj=ogretmenler.find(o=>(o.displayName||o.email)===og);
-  await addDoc(collection(db,"sinavlar"),{ders,tarih,sinif:document.getElementById("sSinif").value,saat:document.getElementById("sSaat").value,sure:document.getElementById("sSure").value,salon:document.getElementById("sSalon").value,ogretmen:og,ogretmenEmail:ogObj?.email||""});
-  document.getElementById("sTarih").value="";togglePanel("sinavForm");toast("Sınav eklendi!");
+  const seciliSiniflar = Array.from(document.querySelectorAll("#sSinifSecim input:checked")).map(c=>c.value);
+  await addDoc(collection(db,"sinavlar"),{
+    tur:document.getElementById("sTur").value,
+    ders, tarih,
+    siniflar: seciliSiniflar,
+    saat:document.getElementById("sSaat").value,
+    sure:document.getElementById("sSure").value,
+    salon:document.getElementById("sSalon").value,
+    ogretmen:og, ogretmenEmail:ogObj?.email||""
+  });
+  document.getElementById("sTarih").value="";
+  togglePanel("sinavForm");
+  toast("Sınav eklendi!");
 };
 
 // ── ETÜT ──
