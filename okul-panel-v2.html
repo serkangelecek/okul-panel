@@ -14,7 +14,7 @@
       --card: rgba(255,255,255,0.06); --card-border: rgba(255,255,255,0.1); --radius: 14px;
     }
     body { font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--text); min-height: 100vh; }
-
+ 
     /* ── LOGIN ── */
     #loginPage { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
       background: linear-gradient(135deg,#0f1b35 0%,#162347 50%,#1a1040 100%); }
@@ -35,14 +35,14 @@
     .google-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
     .google-btn img { width:22px; height:22px; }
     .login-note { font-size:12px; color:var(--muted); text-align:center; margin-top:16px; }
-
+ 
     /* ── LOADING ── */
     #loadingPage { min-height:100vh; display:none; align-items:center; justify-content:center;
       flex-direction:column; gap:16px; background:var(--navy); }
     .spinner { width:40px; height:40px; border:3px solid rgba(245,158,11,0.2);
       border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
-
+ 
     /* ── APP ── */
     #appPage { display:none; flex-direction:column; min-height:100vh; }
     .header { background:var(--navy2); border-bottom:1px solid var(--card-border);
@@ -68,13 +68,13 @@
     .nav-btn:hover { color:var(--text); }
     .nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
     .content { flex:1; padding:16px; max-width:1100px; width:100%; margin:0 auto; }
-
+ 
     /* ── SECTIONS ── */
     .sec { display:none; }
     .sec.active { display:block; }
     .sec-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
     .sec-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
-
+ 
     /* ── CARDS / FORMS ── */
     .card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
     .card-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; margin-bottom:14px; }
@@ -91,7 +91,7 @@
     .finput:focus, .fselect:focus, .ftextarea:focus { outline:none; border-color:var(--accent); }
     .fselect option { background:#1e2d4f; }
     .ftextarea { resize:vertical; min-height:75px; }
-
+ 
     /* ── BUTTONS ── */
     .btn { display:inline-flex; align-items:center; gap:7px; padding:9px 16px; border-radius:10px;
       font-size:13px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
@@ -100,7 +100,7 @@
     .btn-danger { background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
     .btn-ghost { background:var(--card); color:var(--text); border:1px solid var(--card-border); }
     .btn-sm { padding:5px 10px; font-size:12px; }
-
+ 
     /* ── DUYURU ── */
     .duyuru-card { background:var(--card); border:1px solid var(--card-border);
       border-radius:var(--radius); padding:16px 18px; margin-bottom:10px; border-left:4px solid transparent; }
@@ -117,7 +117,7 @@
     .ob-yuksek { background:rgba(239,68,68,0.2); color:#fca5a5; }
     .ob-normal { background:rgba(59,130,246,0.2); color:#93c5fd; }
     .ob-dusuk { background:rgba(100,116,139,0.3); color:#94a3b8; }
-
+ 
     /* ── SINAV ── */
     .sinav-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; }
     .sinav-card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); padding:16px; }
@@ -126,7 +126,7 @@
     .s-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px; }
     .s-label { color:var(--muted); }
     .s-val { font-weight:600; }
-
+ 
     /* ── TABLE ── */
     .table-wrap { overflow-x:auto; }
     table { width:100%; border-collapse:collapse; font-size:13px; }
@@ -138,7 +138,7 @@
     tr:hover td { background:rgba(255,255,255,0.02); }
     .gun-badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:12px;
       font-weight:600; background:rgba(30,58,138,0.35); color:#93c5fd; }
-
+ 
     /* ── PROGRAM ── */
     .sinif-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
     .sinif-tab { padding:7px 14px; border-radius:10px; font-size:13px; font-weight:600;
@@ -150,14 +150,14 @@
     .saat-cell { font-weight:700; color:var(--accent); background:rgba(245,158,11,0.05) !important; font-size:11px; }
     .bos-cell { color:rgba(255,255,255,0.2); }
     .highlight-cell { background:rgba(245,158,11,0.1); font-weight:700; color:var(--accent); }
-
+ 
     /* ── STATS ── */
     .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; margin-bottom:18px; }
     .stat-card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); padding:16px; }
     .stat-num { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; }
     .stat-lbl { font-size:12px; color:var(--muted); margin-top:3px; }
     .c-acc { color:var(--accent); } .c-grn { color:var(--accent2); } .c-blu { color:#93c5fd; } .c-red { color:#fca5a5; }
-
+ 
     /* ── KULLANICI YÖNETİMİ ── */
     .user-list-card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); overflow:hidden; }
     .user-item { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.05); }
@@ -167,12 +167,12 @@
     .user-name { font-weight:600; font-size:14px; }
     .user-email { font-size:12px; color:var(--muted); }
     .rol-select { background:rgba(255,255,255,0.07); border:1px solid var(--card-border); border-radius:8px; padding:5px 8px; color:var(--text); font-size:12px; cursor:pointer; }
-
+ 
     /* ── EXCEL ── */
     .excel-zone { border:2px dashed var(--card-border); border-radius:var(--radius); padding:32px; text-align:center; cursor:pointer; transition:all 0.2s; }
     .excel-zone:hover { border-color:var(--accent); background:rgba(245,158,11,0.05); }
     .excel-zone.drag { border-color:var(--accent); background:rgba(245,158,11,0.1); }
-
+ 
     /* ── TOAST ── */
     .toast { position:fixed; bottom:20px; right:20px; background:#162347; border:1px solid var(--accent);
       border-radius:12px; padding:12px 18px; font-size:14px; font-weight:500; z-index:9999;
@@ -180,7 +180,7 @@
       animation:slideUp 0.3s ease; }
     .toast.show { display:flex; }
     @keyframes slideUp { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
-
+ 
     .empty { text-align:center; padding:40px; color:var(--muted); }
     .empty-icon { font-size:36px; margin-bottom:10px; }
     .loading-txt { text-align:center; padding:30px; color:var(--muted); font-size:14px; }
@@ -189,7 +189,7 @@
   </style>
 </head>
 <body>
-
+ 
 <!-- LOGIN -->
 <div id="loginPage">
   <div class="login-card">
@@ -209,13 +209,13 @@
     <div class="login-note">🔒 Yalnızca okul Google hesapları kabul edilir</div>
   </div>
 </div>
-
+ 
 <!-- LOADING -->
 <div id="loadingPage" style="display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div class="spinner"></div>
   <div style="color:var(--muted);font-size:14px">Giriş yapılıyor...</div>
 </div>
-
+ 
 <!-- APP -->
 <div id="appPage" style="display:none;flex-direction:column;min-height:100vh;">
   <header class="header">
@@ -229,7 +229,7 @@
   </header>
   <nav class="nav" id="mainNav"></nav>
   <div class="content" id="mainContent">
-
+ 
     <!-- DUYURULAR -->
     <div class="sec" id="sec-duyurular">
       <div class="sec-header">
@@ -253,7 +253,7 @@
       </div>
       <div id="duyurularList"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
-
+ 
     <!-- NÖBET -->
     <div class="sec" id="sec-nobetler">
       <div class="sec-header">
@@ -282,7 +282,7 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- SINAVLAR -->
     <div class="sec" id="sec-sinavlar">
       <div class="sec-header">
@@ -308,7 +308,7 @@
       </div>
       <div class="sinav-grid" id="sinavGrid"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
-
+ 
     <!-- PROGRAM -->
     <div class="sec" id="sec-program">
       <div class="sec-header">
@@ -331,7 +331,7 @@
         <div class="table-wrap"><table class="prog-table" id="progTable"></table></div>
       </div>
     </div>
-
+ 
     <!-- KULLANICILAR -->
     <div class="sec" id="sec-kullanicilar">
       <div class="sec-header">
@@ -340,7 +340,7 @@
       <div class="info-box">Sisteme giriş yapmış kullanıcıların rolleri burada yönetilir. Öğretmen veya öğrenci rolü atayabilirsiniz.</div>
       <div id="kullaniciList"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
-
+ 
     <!-- YÖNETİM -->
     <div class="sec" id="sec-yonetim">
       <div class="sec-title" style="margin-bottom:18px">⚙️ Yönetim Paneli</div>
@@ -350,15 +350,15 @@
         <div id="sistemDurum"></div>
       </div>
     </div>
-
+ 
   </div>
 </div>
-
+ 
 <div class="toast" id="toast">✅ <span id="toastMsg"></span></div>
-
+ 
 <!-- SheetJS for Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+ 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -366,7 +366,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, collection, doc, getDoc, setDoc, addDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDocs }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+ 
 // ── CONFIG ──
 const firebaseConfig = {
   apiKey: "AIzaSyCtrcgZ8njUu9mH5sf2DdRG69hHnzI9jOY",
@@ -376,25 +376,25 @@ const firebaseConfig = {
   messagingSenderId: "60840896294",
   appId: "1:60840896294:web:08dd79ab2368ca506203e7"
 };
-
+ 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
-
+ 
 // ── ADMIN EMAIL (Sen) ──
-const ADMIN_EMAIL = "serkanugur@gelecekkoleji.k12.tr"; // ← Kendi mailinle değiştir
-
+const ADMIN_EMAIL = "serkan.ugur@gelecekkoleji.k12.tr";
+ 
 const GUNLER = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma"];
 const SAATLER = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00"];
 const ROL_LABELS = { admin:"Admin", mudur:"Müdür", ogretmen:"Öğretmen", ogrenci:"Öğrenci" };
-
+ 
 let currentUser = null;
 let currentRole = null;
 let currentSinif = null;
 let selectedProgSinif = null;
 let programData = {};
-
+ 
 // ── AUTH STATE ──
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -408,11 +408,11 @@ onAuthStateChanged(auth, async (user) => {
     hide("appPage");
   }
 });
-
+ 
 async function loadUser(user) {
   currentUser = user;
   const email = user.email;
-
+ 
   // Admin kontrolü
   if (email === ADMIN_EMAIL) {
     currentRole = "admin";
@@ -438,17 +438,17 @@ async function loadUser(user) {
       });
     }
   }
-
+ 
   if (currentRole === "beklemede") {
     hide("loadingPage");
     alert("Hesabınız henüz onaylanmamış. Yöneticinizle iletişime geçin.");
     await signOut(auth);
     return;
   }
-
+ 
   setupApp();
 }
-
+ 
 // ── LOGIN / LOGOUT ──
 window.googleLogin = async function() {
   try {
@@ -462,24 +462,24 @@ window.googleLogin = async function() {
     console.error(e);
   }
 };
-
+ 
 window.doLogout = async function() {
   await signOut(auth);
 };
-
+ 
 // ── APP SETUP ──
 function setupApp() {
   hide("loadingPage");
   const appEl = document.getElementById("appPage");
   appEl.style.display = "flex";
-
+ 
   // Header
   document.getElementById("headerName").textContent = currentUser.displayName || currentUser.email;
   document.getElementById("userPic").src = currentUser.photoURL || "";
   const roleEl = document.getElementById("headerRole");
   roleEl.textContent = ROL_LABELS[currentRole] || currentRole;
   roleEl.className = "header-role hr-" + currentRole;
-
+ 
   // Tabs
   const tabs = buildTabs();
   const nav = document.getElementById("mainNav");
@@ -491,17 +491,17 @@ function setupApp() {
     btn.onclick = () => { showSec(t.id); nav.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); };
     nav.appendChild(btn);
   });
-
+ 
   // Yetki butonları
   if (isManager()) document.querySelectorAll(".manager-only").forEach(el=>el.style.display="inline-flex");
   if (isAdmin()) document.querySelectorAll(".admin-only").forEach(el=>el.style.display="inline-flex");
   if (isManager()) document.getElementById("nobetDelTh").textContent = "";
-
+ 
   // İlk sekme
   showSec(tabs[0].id);
   startListeners();
 }
-
+ 
 function buildTabs() {
   const base = [
     {id:"duyurular", label:"📢 Duyurular"},
@@ -513,15 +513,15 @@ function buildTabs() {
   if (isAdmin()) base.push({id:"yonetim", label:"⚙️ Yönetim"});
   return base;
 }
-
+ 
 function showSec(id) {
   document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active"));
   document.getElementById("sec-"+id)?.classList.add("active");
 }
-
+ 
 function isAdmin() { return currentRole==="admin"; }
 function isManager() { return currentRole==="admin"||currentRole==="mudur"; }
-
+ 
 // ── LISTENERS ──
 function startListeners() {
   listenDuyurular();
@@ -531,7 +531,7 @@ function startListeners() {
   if (isManager()) listenKullanicilar();
   if (isAdmin()) listenStats();
 }
-
+ 
 // ── DUYURULAR ──
 function listenDuyurular() {
   const q = query(collection(db,"duyurular"), orderBy("ts","desc"));
@@ -557,7 +557,7 @@ function listenDuyurular() {
       </div>`).join("");
   });
 }
-
+ 
 window.addDuyuru = async function() {
   const b=document.getElementById("dBaslik").value.trim();
   const i=document.getElementById("dIcerik").value.trim();
@@ -575,12 +575,12 @@ window.addDuyuru = async function() {
   togglePanel("duyuruForm");
   toast("Duyuru yayınlandı!");
 };
-
+ 
 window.delDuyuru = async function(id) {
   await deleteDoc(doc(db,"duyurular",id));
   toast("Duyuru silindi.");
 };
-
+ 
 // ── NÖBET ──
 function listenNobetler() {
   onSnapshot(collection(db,"nobetler"), snap => {
@@ -613,7 +613,7 @@ function listenNobetler() {
     tbody.innerHTML = rows.join("") || `<tr><td colspan="5" class="loading-txt">Nöbet kaydı yok</td></tr>`;
   });
 }
-
+ 
 window.addNobet = async function() {
   const og=document.getElementById("nOgretmen").value.trim();
   const ko=document.getElementById("nKonum").value.trim();
@@ -627,12 +627,12 @@ window.addNobet = async function() {
   togglePanel("nobetForm");
   toast("Nöbet kaydedildi!");
 };
-
+ 
 window.delNobet = async function(id) {
   await deleteDoc(doc(db,"nobetler",id));
   toast("Nöbet silindi.");
 };
-
+ 
 // ── SINAVLAR ──
 function listenSinavlar() {
   onSnapshot(collection(db,"sinavlar"), snap => {
@@ -654,7 +654,7 @@ function listenSinavlar() {
       </div>`).join("");
   });
 }
-
+ 
 window.addSinav = async function() {
   const ders=document.getElementById("sDers").value.trim();
   const tarih=document.getElementById("sTarih").value;
@@ -672,12 +672,12 @@ window.addSinav = async function() {
   togglePanel("sinavForm");
   toast("Sınav eklendi!");
 };
-
+ 
 window.delSinav = async function(id) {
   await deleteDoc(doc(db,"sinavlar",id));
   toast("Sınav silindi.");
 };
-
+ 
 // ── PROGRAM ──
 async function loadProgram() {
   onSnapshot(collection(db,"program"), snap => {
@@ -686,27 +686,27 @@ async function loadProgram() {
     renderSinifTabs();
   });
 }
-
+ 
 function renderSinifTabs() {
   const tabs = document.getElementById("sinifTabs");
   let siniflar = Object.keys(programData).sort();
-
+ 
   // Öğrenci sadece kendi sınıfını görür
   if (currentRole==="ogrenci") {
     siniflar = currentSinif ? [currentSinif] : [];
   }
-
+ 
   // Öğretmen kendi derslerini görmeli — tüm sınıflar ama highlight kendi
   if (!siniflar.length) {
     tabs.innerHTML = "";
     document.getElementById("progTable").innerHTML = "";
     return;
   }
-
+ 
   if (!selectedProgSinif || !siniflar.includes(selectedProgSinif)) {
     selectedProgSinif = siniflar[0];
   }
-
+ 
   if (currentRole==="ogrenci") {
     tabs.style.display = "none";
   } else {
@@ -717,13 +717,13 @@ function renderSinifTabs() {
   }
   renderProgram();
 }
-
+ 
 window.selectProgSinif = function(s) {
   selectedProgSinif = s;
   document.querySelectorAll(".sinif-tab").forEach(b=>b.classList.toggle("active",b.textContent===s));
   renderProgram();
 };
-
+ 
 function renderProgram() {
   const prog = programData[selectedProgSinif] || {};
   const ogretmenAdi = currentUser?.displayName || "";
@@ -746,7 +746,7 @@ function renderProgram() {
       </tr>`).join("")}
     </tbody>`;
 }
-
+ 
 // ── EXCEL İÇE AKTARMA ──
 window.handleExcel = function(input) {
   const file = input.files[0];
@@ -757,7 +757,7 @@ window.handleExcel = function(input) {
     const workbook = XLSX.read(data, {type:"array"});
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
-
+ 
     // Parse: Sınıf | Gün | Saat(1-8) | Ders | Öğretmen
     const grouped = {};
     rows.slice(1).forEach(r => {
@@ -767,21 +767,21 @@ window.handleExcel = function(input) {
       if (!grouped[sinif][gun]) grouped[sinif][gun] = {};
       grouped[sinif][gun][parseInt(saatNo)-1] = { ders, ogretmen: ogretmen||"" };
     });
-
+ 
     // Firebase'e kaydet
     let count = 0;
     for (const [sinif, gunler] of Object.entries(grouped)) {
       await setDoc(doc(db,"program",sinif), gunler);
       count++;
     }
-
+ 
     document.getElementById("excelPreview").innerHTML = `
       <div style="color:var(--accent2);font-weight:600;margin-top:8px">✅ ${count} sınıf programı aktarıldı!</div>`;
     toast("Ders programı güncellendi!");
   };
   reader.readAsArrayBuffer(file);
 };
-
+ 
 // Excel drag-drop
 const zone = document.getElementById("excelZone");
 zone.addEventListener("dragover", e=>{e.preventDefault();zone.classList.add("drag");});
@@ -791,7 +791,7 @@ zone.addEventListener("drop", e=>{
   const file = e.dataTransfer.files[0];
   if (file) { const inp=document.getElementById("excelFile"); inp.files=e.dataTransfer.files; handleExcel(inp); }
 });
-
+ 
 // ── KULLANICILAR ──
 function listenKullanicilar() {
   onSnapshot(collection(db,"users"), snap => {
@@ -817,7 +817,7 @@ function listenKullanicilar() {
       </div>`).join("")}</div>`;
   });
 }
-
+ 
 window.updateRol = async function(uid, rol, email) {
   // Müdür sadece ogretmen/ogrenci/beklemede atayabilir
   if (currentRole==="mudur" && (rol==="admin"||rol==="mudur")) {
@@ -826,12 +826,12 @@ window.updateRol = async function(uid, rol, email) {
   await setDoc(doc(db,"users",uid), {rol}, {merge:true});
   toast("Rol güncellendi!");
 };
-
+ 
 window.updateSinif = async function(uid, sinif) {
   await setDoc(doc(db,"users",uid), {sinif}, {merge:true});
   toast("Sınıf güncellendi!");
 };
-
+ 
 // ── YÖNETİM STATS ──
 function listenStats() {
   const cols = ["duyurular","nobetler","sinavlar","users"];
@@ -860,7 +860,7 @@ function listenStats() {
       </div>
     </div>`;
 }
-
+ 
 // ── HELPERS ──
 window.togglePanel = function(id) { document.getElementById(id).classList.toggle("open"); };
 function show(id) { document.getElementById(id).style.display="flex"; }
