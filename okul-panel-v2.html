@@ -304,10 +304,11 @@
     <div class="sec" id="sec-etut">
       <div class="sec-header">
         <span class="sec-title">📖 Etüt & Deneme</span>
-        <button class="btn btn-purple krd-btn" onclick="togglePanel('etutForm')" style="display:none">+ Etkinlik Ekle</button>
+        <button class="btn btn-purple krd-btn" onclick="openEtutForm(null)" style="display:none">+ Etkinlik Ekle</button>
       </div>
       <div class="card form-panel" id="etutForm">
-        <div class="card-title">Yeni Etüt / Deneme</div>
+        <div class="card-title" id="etutFormTitle">Yeni Etüt / Deneme</div>
+        <input type="hidden" id="etutEditId">
         <div class="form-grid">
           <div class="fg"><label class="flabel">Tür</label>
             <select class="fselect" id="eTur"><option value="etut">📚 Etüt</option><option value="deneme">📝 Deneme Sınavı</option></select></div>
@@ -319,26 +320,34 @@
           <div class="fg"><label class="flabel">Yer / Salon</label><input class="finput" id="eYer" placeholder="D101..."></div>
           <div class="fg full"><label class="flabel">Açıklama</label><input class="finput" id="eAciklama" placeholder="Ek bilgi..."></div>
 
-          <!-- Sınıf Seç → Öğrenci Listesi -->
+          <!-- Çoklu Sınıf + Öğrenci Seçimi -->
           <div class="fg full">
-            <label class="flabel">Sınıf Seç</label>
-            <select class="fselect" id="eSinifSec" onchange="loadEtutOgrenciler()">
-              <option value="">— Sınıf seçin —</option>
-            </select>
-          </div>
-          <div class="fg full" id="eOgrenciSecimBox" style="display:none">
-            <label class="flabel">Öğrencileri Seç</label>
-            <div class="tumunu-sec">
-              <button class="btn btn-ghost btn-sm" type="button" onclick="tumunuSec(true)">✅ Tümünü Seç</button>
-              <button class="btn btn-ghost btn-sm" type="button" onclick="tumunuSec(false)">☐ Temizle</button>
+            <label class="flabel">Sınıf Ekle → Öğrenci Seç</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+              <select class="fselect" id="eSinifSec" style="flex:1;min-width:120px">
+                <option value="">— Sınıf seçin —</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" type="button" onclick="loadEtutOgrenciler()">Listele</button>
             </div>
-            <div class="ogrenci-secim-box" id="eOgrenciList"></div>
-            <div class="secim-info" id="eSecimInfo">0 öğrenci seçildi</div>
+            <div id="eOgrenciSecimBox" style="display:none">
+              <div class="tumunu-sec" style="margin-bottom:8px">
+                <button class="btn btn-ghost btn-sm" type="button" onclick="tumunuSec(true)">✅ Tümünü Seç</button>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="tumunuSec(false)">☐ Temizle</button>
+                <button class="btn btn-green btn-sm" type="button" onclick="secilenleriEkle()">+ Listeye Ekle</button>
+              </div>
+              <div class="ogrenci-secim-box" id="eOgrenciList"></div>
+            </div>
+          </div>
+
+          <!-- Seçilen Öğrenciler -->
+          <div class="fg full" id="seciliOgrencilerBox" style="display:none">
+            <label class="flabel">Seçilen Öğrenciler <span id="eSecimInfo" style="color:var(--accent);font-weight:600"></span></label>
+            <div class="ogrenci-tags" id="seciliOgrencilerTags"></div>
           </div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px">
-          <button class="btn btn-purple" onclick="addEtut()">Kaydet</button>
-          <button class="btn btn-ghost" onclick="togglePanel('etutForm')">İptal</button>
+          <button class="btn btn-purple" onclick="saveEtut()">💾 Kaydet</button>
+          <button class="btn btn-ghost" onclick="closeEtutForm()">İptal</button>
         </div>
       </div>
       <div class="card-grid" id="etutGrid"><div class="loading-txt">⏳ Yükleniyor...</div></div>
@@ -882,8 +891,8 @@ window.addSinav=async()=>{
 // ── ETÜT ──
 function listenEtut() {
   onSnapshot(collection(db,"etut"), snap => {
-    let items=snap.docs.map(d=>({id:d.id,...d.data()}));
-    // Öğrenci sadece kendine atananları görür
+    etutData = snap.docs.map(d=>({id:d.id,...d.data()}));
+    let items=[...etutData];
     if(currentRole==="ogrenci"){
       items=items.filter(e=>e.ogrenciler&&e.ogrenciler.includes(currentUser.email));
     }
@@ -895,38 +904,69 @@ function listenEtut() {
       <div class="item-card etut-border">
         <span class="tur-badge ${e.tur==="etut"?"tb-etut":"tb-deneme"}">${e.tur==="etut"?"📚 Etüt":"📝 Deneme"}</span>
         <div class="i-ders" style="font-size:17px">${e.baslik}</div>
-        <div class="i-sinif">${e.ders||""} • ${e.sinif||""}</div>
+        <div class="i-sinif">${e.ders||""}</div>
         <div class="i-row"><span class="i-label">📅</span><span class="i-val">${e.tarih||""}</span></div>
         <div class="i-row"><span class="i-label">🕐</span><span class="i-val">${e.saat||""}</span></div>
         <div class="i-row"><span class="i-label">👤</span><span class="i-val">${e.ogretmen||""}</span></div>
         <div class="i-row"><span class="i-label">🏫</span><span class="i-val">${e.yer||""}</span></div>
-        ${e.ogrenciler&&e.ogrenciler.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">👨‍🎓 ${e.ogrenciler.length} öğrenci</div></div>`:""}
+        ${e.ogrenciler&&e.ogrenciler.length?`
+          <div style="margin-top:8px;font-size:11px;color:var(--muted)">👨‍🎓 ${e.ogrenciler.length} öğrenci</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+            ${(e.ogrencilerDetay||[]).slice(0,5).map(o=>`<span style="background:rgba(16,185,129,0.1);border-radius:4px;padding:2px 6px;font-size:11px;color:#6ee7b7">${o.ad.split(" ")[0]}</span>`).join("")}
+            ${(e.ogrencilerDetay||[]).length>5?`<span style="font-size:11px;color:var(--muted)">+${(e.ogrencilerDetay||[]).length-5}</span>`:""}
+          </div>` : ""}
         ${e.aciklama?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${e.aciklama}</div>`:""}
-        ${isKoord()?`<button class="btn btn-danger btn-sm" style="margin-top:12px;width:100%;justify-content:center" onclick="delDoc('etut','${e.id}')">🗑 Sil</button>`:""}
+        ${isKoord()?`
+          <div style="display:flex;gap:6px;margin-top:12px">
+            <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="editEtut('${e.id}')">✏️ Düzenle</button>
+            <button class="btn btn-danger btn-sm" style="flex:1;justify-content:center" onclick="delDoc('etut','${e.id}')">🗑 Sil</button>
+          </div>`:""}
       </div>`).join("");
   });
 }
-window.addEtut=async()=>{
-  const b=document.getElementById("eBaslik").value.trim(),t=document.getElementById("eTarih").value;
+
+window.editEtut = id => {
+  const etut = etutData.find(e=>e.id===id);
+  if (etut) openEtutForm(etut);
+};
+
+let etutData = [];
+
+window.saveEtut = async () => {
+  const b=document.getElementById("eBaslik").value.trim(), t=document.getElementById("eTarih").value;
   if(!b||!t){toast("Başlık ve tarih zorunlu!");return;}
-  const seciliOgrenciler=getSeciliOgrenciler();
-  const sinif=document.getElementById("eSinifSec").value;
   const og=document.getElementById("eOgretmen").value;
   const ogObj=ogretmenler.find(o=>(o.displayName||o.email)===og);
-  await addDoc(collection(db,"etut"),{
-    tur:document.getElementById("eTur").value,baslik:b,
-    sinif:sinif||"tumu",ders:document.getElementById("eDers").value,
-    tarih:t,saat:document.getElementById("eSaat").value,
-    ogretmen:og,ogretmenEmail:ogObj?.email||"",
+  const ogrencilerDetay = Object.values(seciliOgrencilerMap);
+  const ogrencilerEmails = ogrencilerDetay.map(o=>o.email);
+  // Sınıfları özet
+  const siniflar_set = [...new Set(ogrencilerDetay.map(o=>o.sinif).filter(Boolean))];
+
+  const data = {
+    tur:document.getElementById("eTur").value, baslik:b,
+    ders:document.getElementById("eDers").value,
+    sinif: siniflar_set.join(", ") || "—",
+    tarih:t, saat:document.getElementById("eSaat").value,
+    ogretmen:og, ogretmenEmail:ogObj?.email||"",
     yer:document.getElementById("eYer").value,
     aciklama:document.getElementById("eAciklama").value,
-    ogrenciler:seciliOgrenciler,
-    ekleyen:currentUser.email,ts:serverTimestamp()
-  });
-  document.getElementById("eBaslik").value="";document.getElementById("eTarih").value="";
-  document.getElementById("eOgrenciSecimBox").style.display="none";
-  document.getElementById("eSinifSec").value="";
-  togglePanel("etutForm");toast("Etkinlik eklendi!");
+    ogrenciler:ogrencilerEmails,
+    ogrencilerDetay:ogrencilerDetay,
+    guncelleme:serverTimestamp()
+  };
+
+  const editId = document.getElementById("etutEditId").value;
+  if (editId) {
+    const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    await updateDoc(doc(db,"etut",editId), data);
+    toast("Etüt güncellendi!");
+  } else {
+    data.ekleyen = currentUser.email;
+    data.ts = serverTimestamp();
+    await addDoc(collection(db,"etut"), data);
+    toast("Etüt eklendi!");
+  }
+  closeEtutForm();
 };
 
 // ── PROGRAM ──
