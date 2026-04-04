@@ -31,7 +31,7 @@
     /* ── HEADER ── */
     .topbar{
       display:flex;align-items:center;justify-content:space-between;
-      background:rgba(15,30,56,0.95);backdrop-filter:blur(20px);
+      background:rgba(15,30,56,0.98);
       border-bottom:2px solid rgba(245,158,11,0.2);padding:10px 28px;gap:16px;
       position:relative;z-index:10;flex-shrink:0;
     }
@@ -54,7 +54,7 @@
     .ders-kal{font-size:12px;color:var(--acc2);margin-top:1px;font-weight:700;}
 
     /* ── MAIN ── */
-    .main{display:grid;grid-template-columns:1fr 320px;overflow:hidden;min-height:0;}
+    .main{display:grid;grid-template-columns:1fr 320px;overflow:hidden;min-height:0;width:100%;}
 
     /* ── SOL SLAYT ── */
     .slide-area{position:relative;overflow:hidden;}
@@ -124,7 +124,7 @@
 
     /* ── SAĞ PANEL ── */
     .sidepanel{
-      background:rgba(15,30,56,0.7);backdrop-filter:blur(10px);
+      background:rgba(15,30,56,0.98);
       border-left:1px solid rgba(255,255,255,0.07);
       display:flex;flex-direction:column;overflow-y:auto;
     }
@@ -207,7 +207,7 @@
   <div style="color:var(--mut);font-size:14px;margin-top:6px">Yükleniyor...</div>
 </div>
 
-<div id="screen" style="display:none">
+<div id="screen" style="display:none;width:100vw;height:100vh;grid-template-rows:auto 1fr auto;">
   <div class="topbar">
     <div class="okul-info">
       <div class="logo-icon" id="logoIcon">O</div>
@@ -325,7 +325,7 @@ let appShown = false;
 function showApp() {
   if(appShown) return; appShown=true;
   document.getElementById("loading").style.display="none";
-  document.getElementById("screen").style.display="grid";
+  document.getElementById("screen").style.display="grid";document.getElementById("screen").style.gridTemplateRows="auto 1fr auto";
 }
 setTimeout(showApp, 3500);
 
