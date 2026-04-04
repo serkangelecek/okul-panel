@@ -1243,7 +1243,7 @@ function renderProgram() {
     GUNLER.forEach(g => {
       const h=prog[g]?.[i]||{};
       const ders=typeof h==="string"?h:(h.ders||"—");
-      const ogr=typeof h==="object"?(h.ogretmen||")":"";
+      const ogr=typeof h==="object"?(h.ogretmen||""):"";  
       const isEmpty=!ders||ders==="—";
       const isMine=currentRole==="ogretmen"&&ogr&&ogAdi&&ogr.includes(ogAdi.split(" ")[0]);
       html += '<td class="'+(isEmpty?"bos-cell":isMine?"my-cell":"")+'">';
