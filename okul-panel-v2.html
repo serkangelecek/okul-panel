@@ -672,6 +672,7 @@ async function loadUser(user) {
       }
     }
   }
+  if (user.email === ADMIN_EMAIL) {
     currentRole = "admin";
     await setDoc(doc(db,"users",user.uid),{email:user.email,displayName:user.displayName,photoURL:user.photoURL,rol:"admin"},{merge:true});
   } else {
