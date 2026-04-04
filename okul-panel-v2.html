@@ -641,11 +641,13 @@ function loadTanimlar() {
     dersBranslar = snap.exists() ? (snap.data().liste||[]) : [];
     renderTanimList("dersBransList", dersBranslar, "delDersBrans");
     updateSelects();
+    if (isManager()) renderKullanicilar();
   });
   onSnapshot(doc(db,"tanimlar","siniflar"), snap => {
     siniflar = snap.exists() ? (snap.data().liste||[]) : [];
     renderTanimList("sinifTanimList", siniflar, "delSinif");
     updateSelects();
+    if (isManager()) renderKullanicilar();
   });
   onSnapshot(doc(db,"tanimlar","konumlar"), snap => {
     konumlar = snap.exists() ? (snap.data().liste||[]) : [];
@@ -944,36 +946,59 @@ zone.addEventListener("dragleave",()=>zone.classList.remove("drag"));
 zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag");const inp=document.getElementById("excelFile");inp.files=e.dataTransfer.files;handleExcel(inp);});
 
 // ── KULLANICILAR ──
+let kullanicilarData = [];
+
 function listenKullanicilar() {
   onSnapshot(collection(db,"users"), snap => {
-    const users=snap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(a.displayName||"").localeCompare(b.displayName||""));
-    const el=document.getElementById("kullaniciList");
-    if(!users.length){el.innerHTML='<div class="empty">Henüz kullanıcı yok</div>';return;}
-    el.innerHTML=`<div class="user-list-card">${users.map(u=>`
-      <div class="user-item">
-        <div class="user-av">${(u.displayName||u.email||"?").charAt(0).toUpperCase()}</div>
-        <div class="user-info">
-          <div class="user-name">${u.displayName||"—"}</div>
-          <div class="user-email">${u.email}${u.brans?` • <span style="color:var(--accent)">${u.brans}</span>`:""}</div>
-        </div>
-        ${u.email===ADMIN_EMAIL?`<span class="role-chip rc-admin">Admin</span>`:`
-        <div class="user-controls">
-          <select class="fselect-sm" onchange="updateRol('${u.uid}',this.value)">
-            <option value="mudur" ${u.rol==="mudur"?"selected":""}>Müdür</option>
-            <option value="koordinator" ${u.rol==="koordinator"?"selected":""}>Ak. Koordinatör</option>
-            <option value="ogretmen" ${u.rol==="ogretmen"?"selected":""}>Öğretmen</option>
-            <option value="ogrenci" ${u.rol==="ogrenci"?"selected":""}>Öğrenci</option>
-            <option value="beklemede" ${u.rol==="beklemede"?"selected":""}>Beklemede</option>
-          </select>
-          ${["ogretmen","koordinator","mudur"].includes(u.rol)?`
-            <select class="fselect-sm" onchange="updateBrans('${u.uid}',this.value)" title="Branş">
-              <option value="">Branş seç</option>
-              ${dersBranslar.map(b=>`<option value="${b}" ${u.brans===b?"selected":""}>${b}</option>`).join("")}
-            </select>`:""}
-          ${u.rol==="ogrenci"?`<input class="finput" style="width:70px;padding:5px 8px;font-size:12px" placeholder="Sınıf" value="${u.sinif||""}" onchange="updateSinif('${u.uid}',this.value)">`:""}
-        </div>`}
-      </div>`).join("")}</div>`;
+    kullanicilarData = snap.docs.map(d=>({uid:d.id,...d.data()}))
+      .sort((a,b)=>(a.displayName||"").localeCompare(b.displayName||""));
+    renderKullanicilar();
   });
+}
+
+function renderKullanicilar() {
+  const el = document.getElementById("kullaniciList");
+  if (!el) return;
+  const users = kullanicilarData;
+  if (!users.length) { el.innerHTML='<div class="empty">Henüz kullanıcı yok</div>'; return; }
+
+  const rolRenkleri = { admin:"rc-admin", mudur:"rc-mudur", koordinator:"rc-koordinator", ogretmen:"rc-ogretmen", ogrenci:"rc-ogrenci", beklemede:"rc-ogrenci" };
+
+  el.innerHTML = `<div class="user-list-card">${users.map(u => {
+    const isAdmin = u.email === ADMIN_EMAIL;
+    const showBrans = ["ogretmen","koordinator","mudur","admin"].includes(u.rol);
+    const showSinif = u.rol === "ogrenci";
+
+    return `<div class="user-item">
+      <div class="user-av">${(u.displayName||u.email||"?").charAt(0).toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-name">${u.displayName||"—"}</div>
+        <div class="user-email">${u.email}</div>
+        ${u.brans?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📚 ${u.brans}</div>`:""}
+        ${u.sinif?`<div style="font-size:11px;color:var(--accent2);margin-top:2px">🏛️ ${u.sinif}</div>`:""}
+      </div>
+      ${isAdmin ? `<span class="role-chip rc-admin">Admin</span>` : `
+      <div class="user-controls">
+        <select class="fselect-sm" onchange="updateRol('${u.uid}',this.value)">
+          <option value="mudur" ${u.rol==="mudur"?"selected":""}>Müdür</option>
+          <option value="koordinator" ${u.rol==="koordinator"?"selected":""}>Ak. Koordinatör</option>
+          <option value="ogretmen" ${u.rol==="ogretmen"?"selected":""}>Öğretmen</option>
+          <option value="ogrenci" ${u.rol==="ogrenci"?"selected":""}>Öğrenci</option>
+          <option value="beklemede" ${u.rol==="beklemede"?"selected":""}>Beklemede</option>
+        </select>
+        ${showBrans ? `
+        <select class="fselect-sm" onchange="updateBrans('${u.uid}',this.value)" title="Branş Ata" style="max-width:140px">
+          <option value="">— Branş seç —</option>
+          ${dersBranslar.map(b=>`<option value="${b}" ${u.brans===b?"selected":""}>${b}</option>`).join("")}
+        </select>` : ""}
+        ${showSinif ? `
+        <select class="fselect-sm" onchange="updateSinif('${u.uid}',this.value)" title="Sınıf Ata" style="max-width:100px">
+          <option value="">— Sınıf —</option>
+          ${siniflar.map(s=>`<option value="${s}" ${u.sinif===s?"selected":""}>${s}</option>`).join("")}
+        </select>` : ""}
+      </div>`}
+    </div>`;
+  }).join("")}</div>`;
 }
 window.updateRol = async (uid,rol) => {
   if(currentRole==="mudur"&&["admin","mudur"].includes(rol)){toast("Bu rolü atama yetkiniz yok!");return;}
