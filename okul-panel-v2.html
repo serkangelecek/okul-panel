@@ -549,7 +549,7 @@ window.googleLogin = async () => {
 window.doLogout = async () => await signOut(auth);
 
 // ── SETUP ──
-function setupApp() {
+window.setupApp = function() {
   hideEl("loadingPage");
   document.getElementById("appPage").style.display = "flex";
   document.getElementById("headerName").textContent = currentUser.displayName || currentUser.email;
@@ -580,7 +580,7 @@ function setupApp() {
   startListeners();
 }
 
-function buildTabs() {
+window.buildTabs = function() {
   const t = [{id:"duyurular",label:"📢 Duyurular"},{id:"sinavlar",label:"📋 Sınavlar"},{id:"etut",label:"📖 Etüt & Deneme"},{id:"program",label:"📚 Ders Programı"}];
   if (currentRole!=="ogrenci") t.splice(1,0,{id:"nobetler",label:"🛡️ Nöbet"});
   if (isManager()) { t.push({id:"kullanicilar",label:"👥 Kullanıcılar"}); t.push({id:"tanimlar",label:"⚙️ Tanımlar"}); }
@@ -588,13 +588,13 @@ function buildTabs() {
   return t;
 }
 
-function showSec(id) { document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active")); document.getElementById("sec-"+id)?.classList.add("active"); }
-function isAdmin() { return currentRole==="admin"; }
-function isManager() { return ["admin","mudur"].includes(currentRole); }
-function isKoord() { return ["admin","mudur","koordinator"].includes(currentRole); }
+window.showSec = function(id) { document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active")); document.getElementById("sec-"+id)?.classList.add("active"); }
+window.isAdmin = function() { return currentRole==="admin"; }
+window.isManager = function() { return ["admin","mudur"].includes(currentRole); }
+window.isKoord = function() { return ["admin","mudur","koordinator"].includes(currentRole); }
 
 // ── OKUL ──
-function loadOkulBilgileri() {
+window.loadOkulBilgileri = function() {
   onSnapshot(doc(db,"ayarlar","okul"), snap => {
     if (!snap.exists()) return;
     const d = snap.data();
@@ -623,7 +623,7 @@ window.saveOkulBilgileri = async () => {
 window.previewLogo = url => { const img=document.getElementById("okulLogoPreview"); if(url){img.src=url;img.style.display="block";}else{img.style.display="none";} };
 
 // ── TANIMLAR ──
-function loadTanimlar() {
+window.loadTanimlar = function() {
   onSnapshot(doc(db,"tanimlar","dersBranslar"), snap => {
     dersBranslar = snap.exists()?(snap.data().liste||[]):[];
     renderTanimList("dersBransList",dersBranslar,"delDersBrans");
@@ -657,13 +657,13 @@ function loadTanimlar() {
   });
 }
 
-function renderTanimList(elId, liste, delFnName) {
+window.renderTanimList = function(elId, liste, delFnName) {
   const el=document.getElementById(elId); if(!el) return;
   if (!liste.length) { el.innerHTML='<span style="color:var(--muted);font-size:13px">Henüz eklenmemiş</span>'; return; }
   el.innerHTML=liste.map(item=>`<div class="tanim-item">${item}${isManager()?`<button class="tanim-del" onclick="window.${delFnName}('${item.replace(/'/g,"\\'")}')">×</button>`:""}</div>`).join("");
 }
 
-function updateSelects() {
+window.updateSelects = function() {
   ["sDers","eDers"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     const cur=el.value; el.innerHTML=`<option value="">Seçin...</option>`;
@@ -682,13 +682,13 @@ function updateSelects() {
   renderSinifTabs();
 }
 
-function updateKonumSelect() {
+window.updateKonumSelect = function() {
   const el=document.getElementById("nKonum"); if(!el) return;
   const cur=el.value; el.innerHTML=`<option value="">Seçin...</option>`;
   konumlar.forEach(k=>el.innerHTML+=`<option value="${k}" ${k===cur?"selected":""}>${k}</option>`);
 }
 
-function updateOgretmenSelects() {
+window.updateOgretmenSelects = function() {
   ["nOgretmen","sOgretmen","eOgretmen"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     const cur=el.value; el.innerHTML=`<option value="">Seçin...</option>`;
@@ -740,7 +740,7 @@ ogrZone.addEventListener("dragover",e=>{e.preventDefault();ogrZone.classList.add
 ogrZone.addEventListener("dragleave",()=>ogrZone.classList.remove("drag"));
 ogrZone.addEventListener("drop",e=>{e.preventDefault();ogrZone.classList.remove("drag");const inp=document.getElementById("ogrenciExcelFile");inp.files=e.dataTransfer.files;handleOgrenciExcel(inp);});
 
-function renderOgrenciListe() {
+window.renderOgrenciListe = function() {
   const el=document.getElementById("ogrenciListeTable"); if(!el) return;
   if(!ogrencilerData.length){el.innerHTML='<div class="empty"><div class="empty-icon">👨‍🎓</div>Henüz öğrenci yüklenmemiş</div>';return;}
   const sinifGrup={};
@@ -815,7 +815,7 @@ window.toggleOgrenci = id => {
   const chk=document.getElementById(id); if(chk){chk.checked=!chk.checked;updateSecimInfo();}
 };
 
-function renderSeciliOgrenciler() {
+window.renderSeciliOgrenciler = function() {
   const box = document.getElementById("seciliOgrencilerBox");
   const tags = document.getElementById("seciliOgrencilerTags");
   const info = document.getElementById("eSecimInfo");
@@ -859,19 +859,19 @@ window.updateSecimInfo = () => {
   document.getElementById("eSecimInfo").textContent=`${secili} öğrenci seçildi`;
 };
 
-function getSeciliOgrenciler() {
+window.getSeciliOgrenciler = function() {
   return Array.from(document.querySelectorAll("#eOgrenciList input[type=checkbox]:checked")).map(c=>c.value);
 }
 
 // ── LISTENERS ──
-function startListeners() {
+window.startListeners = function() {
   listenDuyurular(); listenNobetler(); listenSinavlar(); listenEtut(); loadProgram();
   if (isManager()) listenKullanicilar();
   if (isAdmin()) listenStats();
 }
 
 // ── DUYURULAR ──
-function listenDuyurular() {
+window.listenDuyurular = function() {
   onSnapshot(query(collection(db,"duyurular"),orderBy("ts","desc")), snap => {
     const items=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>d.hedef==="tumu"||d.hedef===currentRole||(currentRole==="koordinator"&&d.hedef==="ogretmen"));
     const el=document.getElementById("duyurularList");
@@ -899,7 +899,7 @@ window.addDuyuru=async()=>{
 };
 
 // ── NÖBET ──
-function listenNobetler() {
+window.listenNobetler = function() {
   onSnapshot(collection(db,"nobetler"), snap => {
     const nobetler=snap.docs.map(d=>({id:d.id,...d.data()}));
     if(["ogretmen","koordinator"].includes(currentRole)){
@@ -934,7 +934,7 @@ window.addNobet=async()=>{
 };
 
 // ── SINAVLAR ──
-function listenSinavlar() {
+window.listenSinavlar = function() {
   onSnapshot(collection(db,"sinavlar"), snap => {
     let items=snap.docs.map(d=>({id:d.id,...d.data()}));
     if(currentRole==="ogrenci"&&currentSinif) items=items.filter(s=>s.sinif===currentSinif);
@@ -963,7 +963,7 @@ window.addSinav=async()=>{
 };
 
 // ── ETÜT ──
-function listenEtut() {
+window.listenEtut = function() {
   onSnapshot(collection(db,"etut"), snap => {
     etutData = snap.docs.map(d=>({id:d.id,...d.data()}));
     let items=[...etutData];
@@ -1044,12 +1044,12 @@ window.saveEtut = async () => {
 };
 
 // ── PROGRAM ──
-function loadProgram() {
+window.loadProgram = function() {
   onSnapshot(collection(db,"program"), snap=>{
     programData={};snap.docs.forEach(d=>{programData[d.id]=d.data();});renderSinifTabs();
   });
 }
-function renderSinifTabs() {
+window.renderSinifTabs = function() {
   const tabs=document.getElementById("sinifTabs");
   let liste=Object.keys(programData).sort();
   if(currentRole==="ogrenci"){liste=currentSinif?[currentSinif]:[];tabs.style.display="none";}
@@ -1060,7 +1060,7 @@ function renderSinifTabs() {
   renderProgram();
 }
 window.selectProgSinif=s=>{selectedProgSinif=s;document.querySelectorAll(".sinif-tab").forEach(b=>b.classList.toggle("active",b.textContent===s));renderProgram();};
-function renderProgram() {
+window.renderProgram = function() {
   const prog=programData[selectedProgSinif]||{};
   const ogAdi=currentUser?.displayName||"";
   document.getElementById("progTable").innerHTML=`
@@ -1103,14 +1103,14 @@ zone.addEventListener("dragleave",()=>zone.classList.remove("drag"));
 zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag");const inp=document.getElementById("excelFile");inp.files=e.dataTransfer.files;handleExcel(inp);});
 
 // ── KULLANICILAR ──
-function listenKullanicilar() {
+window.listenKullanicilar = function() {
   onSnapshot(collection(db,"users"), snap=>{
     kullanicilarData=snap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(a.displayName||"").localeCompare(b.displayName||""));
     renderKullanicilar();
   });
 }
 
-function renderKullanicilar() {
+window.renderKullanicilar = function() {
   const el=document.getElementById("kullaniciList");if(!el)return;
   if(!kullanicilarData.length){el.innerHTML='<div class="empty">Henüz kullanıcı yok</div>';return;}
   el.innerHTML=`<div class="user-list-card">${kullanicilarData.map(u=>{
@@ -1152,7 +1152,7 @@ window.updateBrans=async(uid,brans)=>{await setDoc(doc(db,"users",uid),{brans},{
 window.updateSinif=async(uid,sinif)=>{await setDoc(doc(db,"users",uid),{sinif},{merge:true});toast("Sınıf güncellendi!");};
 
 // ── YÖNETİM ──
-function listenStats() {
+window.listenStats = function() {
   const counts={};
   ["duyurular","nobetler","sinavlar","users","etut","ogrenciler"].forEach(c=>{
     onSnapshot(collection(db,c),snap=>{
@@ -1176,9 +1176,9 @@ function listenStats() {
 // ── HELPERS ──
 window.delDoc=async(col,id)=>{await deleteDoc(doc(db,col,id));toast("Silindi.");};
 window.togglePanel=id=>document.getElementById(id).classList.toggle("open");
-function showEl(id){document.getElementById(id).style.display="flex";}
-function hideEl(id){document.getElementById(id).style.display="none";}
-function toast(msg){document.getElementById("toastMsg").textContent=msg;const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000);}
+window.showEl = function(id){document.getElementById(id).style.display="flex";}
+window.hideEl = function(id){document.getElementById(id).style.display="none";}
+window.toast = function(msg){document.getElementById("toastMsg").textContent=msg;const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000);}
 window.toast=toast;
 </script>
 </body>
