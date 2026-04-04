@@ -838,13 +838,15 @@ window.ogrenciCikar = email => {
 
 window.secilenleriEkle = () => {
   document.querySelectorAll("#eOgrenciList input[type=checkbox]").forEach(c => {
+    const email = c.value;
     if (c.checked) {
-      seciliOgrencilerMap[c.value] = {email:c.value, ad:c.dataset.ad, sinif:c.dataset.sinif, numara:c.dataset.numara};
+      const ogr = ogrencilerData.find(o => o.email === email);
+      if (ogr) seciliOgrencilerMap[email] = {email, ad:ogr.ad, sinif:ogr.sinif, numara:ogr.numara||""};
     } else {
-      delete seciliOgrencilerMap[c.value];
+      delete seciliOgrencilerMap[email];
     }
   });
-  renderSeciliOgrenciler();
+  window.renderSeciliOgrenciler();
   document.getElementById("eOgrenciSecimBox").style.display="none";
   document.getElementById("eSinifSec").value="";
   toast(Object.keys(seciliOgrencilerMap).length + " öğrenci seçildi");
