@@ -325,7 +325,12 @@ let appShown = false;
 function showApp() {
   if(appShown) return; appShown=true;
   document.getElementById("loading").style.display="none";
-  document.getElementById("screen").style.display="grid";document.getElementById("screen").style.gridTemplateRows="auto 1fr auto";
+  const scr = document.getElementById("screen");
+  scr.style.display="grid";
+  scr.style.gridTemplateRows="auto 1fr auto";
+  scr.style.width="100vw";
+  scr.style.height="100vh";
+  setTimeout(() => { render(); }, 150);
 }
 setTimeout(showApp, 3500);
 
