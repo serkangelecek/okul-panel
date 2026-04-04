@@ -627,7 +627,7 @@ function renderSidePanel(){
       SAATLER.forEach((ds,idx)=>{
         const dersObj=prog[bugunGun]?.[idx];
         const ders=typeof dersObj==="object"?dersObj.ders:dersObj;
-        const ogr=typeof dersObj==="object"?(dersObj.ogretmen||")":"";
+        const ogr=typeof dersObj==="object"?(dersObj.ogretmen||""):""; 
         if(!ders||ders==="—") return;
         dersBulundu=true;
         const aktif = aktDs && aktDs.no===ds.no && aktDs.durum==="aktif";
