@@ -803,10 +803,10 @@ window.loadEtutOgrenciler = () => {
   if (!liste.length) { box.style.display="none"; toast("Bu sınıfa ait öğrenci bulunamadı!"); return; }
   box.style.display="block";
   document.getElementById("eOgrenciList").innerHTML=liste.map(o=>`
-    <div class="ogrenci-check-item" onclick="toggleOgrenci('chk-${o.email.replace(/[.@]/g,'_')}')">
-      <input type="checkbox" id="chk-${o.email.replace(/[.@]/g,'_')}" value="${o.email}" onchange="updateSecimInfo()">
+    <div class="ogrenci-check-item">
+      <input type="checkbox" id="chk-${o.email.replace(/[.@]/g,'_')}" value="${o.email}" data-ad="${o.ad}" data-sinif="${o.sinif}" data-numara="${o.numara||''}">
       <label for="chk-${o.email.replace(/[.@]/g,'_')}">${o.ad}</label>
-      <span class="ogrenci-no">${o.numara||""}</span>
+      <span class="ogrenci-no">${o.numara||""} • ${o.sinif}</span>
     </div>`).join("");
   updateSecimInfo();
 };
