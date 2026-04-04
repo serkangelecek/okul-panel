@@ -1106,7 +1106,8 @@ window.renderSeciliOgrenciler = function() {
 };
 
 window.saveEtut = async function() {
-  const b=document.getElementById("eBaslik").value.trim(), t=document.getElementById("eTarih").value;
+  const eBaslikEl=document.getElementById("eBaslik");
+  const b=eBaslikEl?eBaslikEl.value.trim():(document.getElementById("eDers").value||"Etüt"), t=document.getElementById("eTarih").value;
   if(!b||!t){toast("Başlık ve tarih zorunlu!");return;}
   const og=document.getElementById("eOgretmen").value;
   const ogObj=ogretmenler.find(o=>(o.displayName||o.email)===og);
