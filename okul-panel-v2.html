@@ -815,6 +815,26 @@ window.toggleOgrenci = id => {
   const chk=document.getElementById(id); if(chk){chk.checked=!chk.checked;updateSecimInfo();}
 };
 
+function renderSeciliOgrenciler() {
+  const box = document.getElementById("seciliOgrencilerBox");
+  const tags = document.getElementById("seciliOgrencilerTags");
+  const info = document.getElementById("eSecimInfo");
+  const liste = Object.values(seciliOgrencilerMap);
+  if (!liste.length) { if(box) box.style.display="none"; return; }
+  if(box) box.style.display = "block";
+  if(info) info.textContent = "("+liste.length+" öğrenci)";
+  if(tags) tags.innerHTML = liste.map(o => `
+    <div class="ogrenci-tag" style="display:inline-flex;align-items:center;gap:6px">
+      \${o.ad}
+      <button onclick="ogrenciCikar('\${o.email}')" style="background:none;border:none;color:#6ee7b7;cursor:pointer;font-size:14px;line-height:1">×</button>
+    </div>`).join("");
+}
+
+window.ogrenciCikar = email => {
+  delete seciliOgrencilerMap[email];
+  renderSeciliOgrenciler();
+};
+
 window.secilenleriEkle = () => {
   document.querySelectorAll("#eOgrenciList input[type=checkbox]").forEach(c => {
     if (c.checked) {
