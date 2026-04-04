@@ -641,7 +641,14 @@ function loadTanimlar() {
     dersBranslar = snap.exists() ? (snap.data().liste||[]) : [];
     renderTanimList("dersBransList", dersBranslar, "delDersBrans");
     updateSelects();
-    if (isManager()) renderKullanicilar();
+    // Kullanıcı listesindeki branş dropdown'larını güncelle
+    document.querySelectorAll("[id^='brans-']").forEach(sel => {
+      const uid = sel.id.replace("brans-","");
+      const u = kullanicilarData.find(x=>x.uid===uid);
+      if (!u) return;
+      sel.innerHTML = `<option value="">— Branş seç —</option>` +
+        dersBranslar.map(b=>`<option value="${b}" ${u.brans===b?"selected":""}>${b}</option>`).join("");
+    });
   });
   onSnapshot(doc(db,"tanimlar","siniflar"), snap => {
     siniflar = snap.exists() ? (snap.data().liste||[]) : [];
@@ -951,9 +958,11 @@ zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag"
 let kullanicilarData = [];
 
 function listenKullanicilar() {
-  // Veri loadTanimlar içindeki users snapshot'ından geliyor
-  // İlk yüklemede render et
-  renderKullanicilar();
+  onSnapshot(collection(db,"users"), snap => {
+    kullanicilarData = snap.docs.map(d=>({uid:d.id,...d.data()}))
+      .sort((a,b)=>(a.displayName||"").localeCompare(b.displayName||""));
+    renderKullanicilar();
+  });
 }
 
 function renderKullanicilar() {
@@ -987,9 +996,9 @@ function renderKullanicilar() {
           <option value="beklemede" ${u.rol==="beklemede"?"selected":""}>Beklemede</option>
         </select>
         ${showBrans ? `
-        <select class="fselect-sm" onchange="updateBrans('${u.uid}',this.value)" title="Branş Ata" style="max-width:140px">
+        <select class="fselect-sm" id="brans-${u.uid}" onchange="updateBrans('${u.uid}',this.value)" title="Branş Ata" style="max-width:140px">
           <option value="">— Branş seç —</option>
-          ${dersBranslar.map(b=>`<option value="${b}" ${u.brans===b?"selected":""}>${b}</option>`).join("")}
+          ${dersBranslar.length ? dersBranslar.map(b=>`<option value="${b}" ${u.brans===b?"selected":""}>${b}</option>`).join("") : `<option disabled>Önce Tanımlar'dan branş ekleyin</option>`}
         </select>` : ""}
         ${showSinif ? `
         <select class="fselect-sm" onchange="updateSinif('${u.uid}',this.value)" title="Sınıf Ata" style="max-width:100px">
