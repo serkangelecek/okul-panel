@@ -655,9 +655,11 @@ function loadTanimlar() {
     updateKonumSelect();
   });
   onSnapshot(collection(db,"users"), snap => {
-    ogretmenler = snap.docs.map(d=>({uid:d.id,...d.data()}))
-      .filter(u=>["ogretmen","koordinator","admin","mudur"].includes(u.rol));
+    const tumKullanicilar = snap.docs.map(d=>({uid:d.id,...d.data()}));
+    ogretmenler = tumKullanicilar.filter(u=>["ogretmen","koordinator","admin","mudur"].includes(u.rol));
+    kullanicilarData = tumKullanicilar.sort((a,b)=>(a.displayName||"").localeCompare(b.displayName||""));
     updateOgretmenSelects();
+    if (isManager()) renderKullanicilar();
   });
 }
 
@@ -949,11 +951,9 @@ zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag"
 let kullanicilarData = [];
 
 function listenKullanicilar() {
-  onSnapshot(collection(db,"users"), snap => {
-    kullanicilarData = snap.docs.map(d=>({uid:d.id,...d.data()}))
-      .sort((a,b)=>(a.displayName||"").localeCompare(b.displayName||""));
-    renderKullanicilar();
-  });
+  // Veri loadTanimlar içindeki users snapshot'ından geliyor
+  // İlk yüklemede render et
+  renderKullanicilar();
 }
 
 function renderKullanicilar() {
