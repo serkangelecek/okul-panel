@@ -997,7 +997,7 @@ window.listenSinavlar = function() {
           '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">' +
             s.siniflar.map(sf => '<span style="background:rgba(30,58,138,0.35);color:#93c5fd;font-size:12px;padding:3px 10px;border-radius:6px;font-weight:600">' + sf + '</span>').join("") +
           '</div>' : '') +
-        (isManager() ? '<button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="delDoc('sinavlar','' + s.id + '')">🗑 Sil</button>' : '') +
+        (isManager() ? '<button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="delDoc(\'sinavlar\',\''+s.id+'\')">🗑 Sil</button>' : '') +
       '</div>';
     }).join("");
   });
