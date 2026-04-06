@@ -829,7 +829,7 @@ function loadTanimlar() {
   });
   onSnapshot(collection(db,"ogrenciler"), snap => {
     ogrencilerData = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if (isManager()) renderOgrenciListe();
+    if (isManager()) { renderOgrenciListe(); renderOgrenciKullanici(); }
   });
 }
 
