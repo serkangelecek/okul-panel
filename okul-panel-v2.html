@@ -732,20 +732,6 @@ window.userPhotoInline = function(displayName, size=24) {
 };
 
 // ── KALAN GÜN ──
-// Tarih formatlama — yyyy-aa-gg → gg.aa.yyyy Günü
-const TR_GUNLER_K = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
-window.tarihGoster = function(tarih) {
-  if(!tarih) return "—";
-  // yyyy-aa-gg formatını dönüştür
-  if(tarih.includes("-") && tarih.length===10) {
-    const [y,m,g] = tarih.split("-");
-    const d = new Date(tarih+"T00:00:00");
-    const gun = TR_GUNLER_K[d.getDay()];
-    return g+"."+m+"."+y+" "+gun;
-  }
-  return tarih;
-};
-
 // Tarih formatlama: yyyy-aa-gg → gg.aa.yyyy Günü
 const TR_GUNLER_K = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
 window.tarihGoster = function(tarih) {
