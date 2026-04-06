@@ -369,6 +369,7 @@
       <div class="sec-header">
         <span class="sec-title">📖 Etüt</span>
         <button class="btn btn-purple krd-btn" onclick="openEtutForm(null)" style="display:none">+ Etüt Ekle</button>
+        <button class="btn btn-ghost krd-btn" onclick="togglePanel('etutExcelForm')" style="display:none">📥 Excel'den Aktar</button>
       </div>
       <div class="card form-panel" id="etutForm">
         <div class="card-title" id="etutFormTitle">Yeni Etüt</div>
@@ -405,6 +406,37 @@
           <button class="btn btn-purple" onclick="saveEtut()">💾 Kaydet</button>
           <button class="btn btn-ghost" onclick="closeEtutForm()">İptal</button>
         </div>
+      </div>
+      <!-- Excel yükleme formu -->
+      <div class="card form-panel" id="etutExcelForm">
+        <div class="card-title">📥 Excel'den Etüt Aktar</div>
+        <div class="info-box">
+          📋 Format: <strong>Başlık | Ders | Tarih (YYYY-AA-GG) | Saat | Yer | Öğretmen | Açıklama | Öğrenci E-postaları (virgülle)</strong>
+          <br><span style="font-size:11px;color:var(--muted)">İlk satır başlık satırı olabilir (atlanır). Öğrenci e-postaları: ali@okul.com,veli@okul.com</span>
+        </div>
+        <div class="excel-zone" onclick="document.getElementById('etutExcelFile').click()">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <div style="font-weight:600;margin-bottom:4px">Etüt Excel dosyası seç veya sürükle</div>
+          <div style="font-size:12px;color:var(--muted)">.xlsx veya .xls</div>
+          <input type="file" id="etutExcelFile" accept=".xlsx,.xls" style="display:none" onchange="handleEtutExcel(this)">
+        </div>
+        <div id="etutExcelPreview" style="margin-top:12px"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="togglePanel('etutExcelForm')">İptal</button>
+        </div>
+      </div>
+      <!-- Excel yükleme formu -->
+      <div class="card form-panel" id="etutExcelForm">
+        <div class="card-title">📥 Excel'den Etüt Aktar</div>
+        <div class="info-box">📋 Format: <strong>Başlık | Ders | Tarih (YYYY-AA-GG) | Saat | Yer | Öğretmen | Açıklama | Öğrenciler (Ad Soyad veya e-posta, virgülle)</strong><br><span style="font-size:11px;color:var(--muted)">Örnek öğrenci: Ali Yılmaz,Veli Kaya — ad soyad ile arama yapılır, bulunamazsa e-posta denenir</span></div>
+        <div class="excel-zone" onclick="document.getElementById('etutExcelFile').click()">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <div style="font-weight:600;margin-bottom:4px">Etüt Excel dosyası seç veya sürükle</div>
+          <div style="font-size:12px;color:var(--muted)">.xlsx veya .xls</div>
+          <input type="file" id="etutExcelFile" accept=".xlsx,.xls" style="display:none" onchange="handleEtutExcel(this)">
+        </div>
+        <div id="etutExcelPreview" style="margin-top:12px"></div>
+        <div style="margin-top:10px"><button class="btn btn-ghost" onclick="togglePanel('etutExcelForm')">İptal</button></div>
       </div>
       <div id="etutGrid" style="display:flex;flex-direction:column;gap:12px"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
@@ -1210,6 +1242,100 @@ window.saveEtut = async function() {
   closeEtutForm();
 };
 
+
+// ── ETÜT EXCEL AKTARIM ──
+window.handleEtutExcel = async function(input) {
+  const f = input.files[0]; if(!f) return;
+  const preview = document.getElementById("etutExcelPreview");
+  preview.innerHTML = '<div class="loading-txt">⏳ Okunuyor...</div>';
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:""});
+      // İlk satır başlık mı kontrol et
+      const startIdx = (String(rows[0]?.[0]||"").toLowerCase().includes("başlık")||
+                        String(rows[0]?.[0]||"").toLowerCase().includes("baslik")) ? 1 : 0;
+      const dataRows = rows.slice(startIdx).filter(r=>r[0]||r[2]); // Başlık veya tarih olan satırlar
+
+      if(!dataRows.length){ preview.innerHTML='<div class="warn-box">Veri bulunamadı!</div>'; return; }
+
+      // Önizleme göster
+      let prevHtml = '<div class="success-box">✅ '+dataRows.length+' etüt bulundu. Önizleme:</div>';
+      prevHtml += '<div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Başlık</th><th>Ders</th><th>Tarih</th><th>Saat</th><th>Yer</th><th>Öğretmen</th><th>Öğrenci</th></tr></thead><tbody>';
+      dataRows.slice(0,5).forEach(r=>{
+        const ogrList = String(r[7]||"").split(",").map(x=>x.trim()).filter(Boolean);
+        prevHtml += '<tr><td>'+(r[0]||"—")+'</td><td>'+(r[1]||"—")+'</td><td>'+(r[2]||"—")+'</td><td>'+(r[3]||"—")+'</td><td>'+(r[4]||"—")+'</td><td>'+(r[5]||"—")+'</td><td style="font-size:11px">'+(ogrList.length?ogrList.join(", "):"—")+'</td></tr>';
+      });
+      if(dataRows.length>5) prevHtml += '<tr><td colspan="7" style="text-align:center;color:var(--muted)">...ve '+(dataRows.length-5)+' satır daha</td></tr>';
+      prevHtml += '</tbody></table></div>';
+      prevHtml += '<div style="margin-top:10px;display:flex;gap:8px">';
+      prevHtml += '<button class="btn btn-purple" onclick="etutExcelKaydet(window._etutExcelRows)">💾 Tümünü Kaydet ('+dataRows.length+' etüt)</button>';
+      prevHtml += '<button class="btn btn-ghost btn-sm" onclick="document.getElementById('etutExcelPreview').innerHTML='';document.getElementById('etutExcelFile').value=''">İptal</button>';
+      prevHtml += '</div>';
+      preview.innerHTML = prevHtml;
+      window._etutExcelRows = dataRows;
+    } catch(err) {
+      preview.innerHTML = '<div class="warn-box">❌ Hata: '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(f);
+};
+
+window.etutExcelKaydet = async function(rows) {
+  if(!rows||!rows.length) return;
+  const preview = document.getElementById("etutExcelPreview");
+  preview.innerHTML = '<div class="loading-txt">⏳ Kaydediliyor...</div>';
+  let ok=0, hata=0;
+  for(const r of rows){
+    try {
+      const baslik = String(r[0]||"").trim();
+      const ders   = String(r[1]||"").trim();
+      const tarih  = String(r[2]||"").trim();
+      const saat   = String(r[3]||"").trim();
+      const yer    = String(r[4]||"").trim();
+      const ogretmen = String(r[5]||"").trim();
+      const aciklama = String(r[6]||"").trim();
+      const emailStr = String(r[7]||"").trim();
+      if(!baslik&&!ders) { hata++; continue; }
+      // Öğrencileri bul — ad soyad veya e-posta ile ara
+      const ogrAramalar = emailStr.split(",").map(x=>x.trim()).filter(Boolean);
+      const ogrDetay = ogrAramalar.map(aranan=>{
+        // Önce ad soyad ile ara (büyük/küçük harf duyarsız)
+        const araLower = aranan.toLowerCase();
+        let ogr = ogrencilerData.find(o=>(o.ad||"").toLowerCase()===araLower);
+        // Bulunamazsa e-posta ile ara
+        if(!ogr) ogr = ogrencilerData.find(o=>(o.email||"").toLowerCase()===araLower);
+        // Bulunamazsa kısmi ad eşleşmesi
+        if(!ogr) ogr = ogrencilerData.find(o=>(o.ad||"").toLowerCase().includes(araLower)||araLower.includes((o.ad||"").toLowerCase().split(" ")[0]));
+        return ogr
+          ? {email:ogr.email,ad:ogr.ad,sinif:ogr.sinif,numara:ogr.numara||""}
+          : {email:aranan.includes("@")?aranan:"",ad:aranan,sinif:"",numara:""};
+      });
+      const emails = ogrDetay.map(o=>o.email).filter(Boolean);
+      const siniflarSet = [...new Set(ogrDetay.map(o=>o.sinif).filter(Boolean))];
+      const ogObj = ogretmenler.find(o=>o.displayName===ogretmen||o.email===ogretmen);
+      const data = {
+        baslik: baslik||ders,
+        ders, tarih, saat, yer, aciklama,
+        ogretmen, ogretmenEmail: ogObj?.email||"",
+        sinif: siniflarSet.join(", ")||"—",
+        ogrenciler: emails,
+        ogrencilerDetay: ogrDetay,
+        ekleyen: currentUser.email,
+        ts: serverTimestamp(),
+        guncelleme: serverTimestamp()
+      };
+      await addDoc(collection(db,"etut"), data);
+      ok++;
+    } catch(err){ hata++; }
+  }
+  preview.innerHTML = '<div class="'+(hata?'warn-box':'success-box')+'">✅ '+ok+' etüt kaydedildi'+(hata?' — ❌ '+hata+' hata':'')+' </div>';
+  document.getElementById("etutExcelFile").value="";
+  window._etutExcelRows = null;
+  if(ok>0) { toast(ok+" etüt Excel'den eklendi!"); setTimeout(()=>togglePanel('etutExcelForm'),2000); }
+};
+
 // ── DENEME SINAVI ──
 function listenDeneme() {
   onSnapshot(collection(db,"deneme"), snap => {
@@ -1808,7 +1934,7 @@ window.addEventListener('load', () => {
     'sinavUyari','openEtutForm','closeEtutForm','saveEtut','editEtut','loadEtutOgrenciler',
     'tumunuSec','secilenleriEkle','ogrenciCikar','renderSeciliOgrenciler',
     'openDenemeForm','closeDenemeForm','saveDeneme','editDeneme',
-    'selectProgSinif','handleExcel','handleOgrenciExcel',
+    'selectProgSinif','handleExcel','handleOgrenciExcel','handleEtutExcel','etutExcelKaydet',
     'updateRol','updateBrans','updateSinif','silKullanici','delDoc','addTanim',
     'addTekOgrenci','yedekAl','yedekYukle','yedekGeriYukleOnayla','silOgrenci','toggleSilmeYetkisi','saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
   const missing = required.filter(f => typeof window[f] !== 'function');
