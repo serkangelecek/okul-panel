@@ -1417,7 +1417,7 @@ window.etutExcelKaydet = async function(rows) {
     preview.innerHTML = '<div class="success-box">✅ '+ok+' etüt başarıyla kaydedildi!'+(hata?' — ❌ '+hata+' satır hatalıydı':'')+' <br><small>Etüt sekmesini kontrol edin.</small></div>';
     toast(ok+" etüt Excel'den eklendi!");
   } else {
-    preview.innerHTML = '<div class="warn-box">❌ Hiç kayıt yapılamadı! ('+hata+' hata) — Console'a bakın.</div>';
+    preview.innerHTML = '<div class="warn-box">❌ Hiç kayıt yapılamadı! ('+hata+' hata)</div>';
   }
   document.getElementById("etutExcelFile").value="";
   window._etutExcelRows = null;
