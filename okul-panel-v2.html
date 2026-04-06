@@ -1262,7 +1262,7 @@ window.handleEtutExcel = async function(input) {
 
       // Önizleme göster
       let prevHtml = '<div class="success-box">✅ '+dataRows.length+' etüt bulundu. Önizleme:</div>';
-      prevHtml += '<div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Başlık</th><th>Ders</th><th>Tarih</th><th>Saat</th><th>Yer</th><th>Öğretmen</th><th>Öğrenci</th></tr></thead><tbody>';
+      prevHtml += '<div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Başlık</th><th>Ders</th><th>Tarih</th><th>Saat</th><th>Yer</th><th>Öğretmen</th><th>Öğrenciler (Ad Soyad)</th></tr></thead><tbody>';
       dataRows.slice(0,5).forEach(r=>{
         const ogrList = String(r[7]||"").split(",").map(x=>x.trim()).filter(Boolean);
         prevHtml += '<tr><td>'+(r[0]||"—")+'</td><td>'+(r[1]||"—")+'</td><td>'+(r[2]||"—")+'</td><td>'+(r[3]||"—")+'</td><td>'+(r[4]||"—")+'</td><td>'+(r[5]||"—")+'</td><td style="font-size:11px">'+(ogrList.length?ogrList.join(", "):"—")+'</td></tr>';
