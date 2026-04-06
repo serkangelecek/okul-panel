@@ -1436,7 +1436,11 @@ function renderKullanicilar() {
         html += '</select>';
       }
       html += '</div>';
-      html += '<button class="btn btn-danger btn-sm" onclick="silKullanici(\''+u.uid+'\')" title="Kullanıcıyı sil" style="flex-shrink:0">🗑</button>';
+      if(currentRole==="admin") {
+        const yetkiVar = u.silmeYetkisi===true;
+        html += '<button class="btn btn-sm ' + (yetkiVar?'btn-danger':'btn-ghost') + '" onclick="toggleSilmeYetkisi(\''+u.uid+'\','+(yetkiVar?'false':'true')+')" style="flex-shrink:0;font-size:11px">'+(yetkiVar?'🔓 Silebilir':'🔒 Silemez')+'</button>';
+      }
+      if(currentRole==="admin") html += '<button class="btn btn-danger btn-sm" onclick="silKullanici(\''+u.uid+'\')" title="Kullanıcıyı sil" style="flex-shrink:0">🗑</button>';
     }
     html += '</div>';
   });
