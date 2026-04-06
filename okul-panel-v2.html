@@ -1411,12 +1411,16 @@ window.etutExcelKaydet = async function(rows) {
       };
       await addDoc(collection(db,"etut"), data);
       ok++;
-    } catch(err){ hata++; }
+    } catch(err){ hata++; console.error("Etüt kayıt hatası:", err.message); toast("❌ Hata: "+err.message); }
   }
-  preview.innerHTML = '<div class="'+(hata?'warn-box':'success-box')+'">✅ '+ok+' etüt kaydedildi'+(hata?' — ❌ '+hata+' hata':'')+' </div>';
+  if(ok>0) {
+    preview.innerHTML = '<div class="success-box">✅ '+ok+' etüt başarıyla kaydedildi!'+(hata?' — ❌ '+hata+' satır hatalıydı':'')+' <br><small>Etüt sekmesini kontrol edin.</small></div>';
+    toast(ok+" etüt Excel'den eklendi!");
+  } else {
+    preview.innerHTML = '<div class="warn-box">❌ Hiç kayıt yapılamadı! ('+hata+' hata) — Console'a bakın.</div>';
+  }
   document.getElementById("etutExcelFile").value="";
   window._etutExcelRows = null;
-  if(ok>0) { toast(ok+" etüt Excel'den eklendi!"); setTimeout(()=>togglePanel('etutExcelForm'),2000); }
 };
 
 // ── DENEME SINAVI ──
@@ -1879,6 +1883,8 @@ function listenGecmis() {
 function renderGecmis() {
   const el = document.getElementById("gecmisGrid"); if(!el) return;
   const bugun = bugunTarih();
+  const _dunObj = new Date(); _dunObj.setDate(_dunObj.getDate()-1);
+  const _dun = _dunObj.toISOString().split('T')[0];
 
   const gecmis = [
     ...etutData.filter(e=>e.tarih&&e.tarih<bugun).map(e=>({...e,tip:"etut",tipAd:"Etüt",icon:"📖",renk:"rgba(139,92,246,0.2)"})),
