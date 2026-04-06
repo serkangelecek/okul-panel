@@ -609,6 +609,35 @@
       </div>
     </div>
 
+    <!-- OLAYLAR -->
+    <div class="sec" id="sec-olaylar">
+      <div class="sec-header">
+        <span class="sec-title">📋 Olay Günlüğü</span>
+        <span style="font-size:12px;color:var(--muted)">Son 500 işlem</span>
+      </div>
+      <div class="info-box">Sistemdeki tüm ekleme, silme ve güncelleme işlemleri burada kayıt altına alınır.</div>
+      <!-- Filtreler -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <select class="fselect" id="olayTipFilter" onchange="filterOlaylar()" style="max-width:160px">
+          <option value="">Tüm İşlemler</option>
+          <option value="ekle">➕ Ekleme</option>
+          <option value="sil">🗑 Silme</option>
+          <option value="guncelle">✏️ Güncelleme</option>
+        </select>
+        <select class="fselect" id="olayKolFilter" onchange="filterOlaylar()" style="max-width:160px">
+          <option value="">Tüm Kategoriler</option>
+          <option value="duyurular">Duyuru</option>
+          <option value="nobetler">Nöbet</option>
+          <option value="sinavlar">Sınav</option>
+          <option value="etut">Etüt</option>
+          <option value="deneme">Deneme</option>
+          <option value="ogrenciler">Öğrenci</option>
+          <option value="users">Kullanıcı</option>
+        </select>
+      </div>
+      <div id="olaylarList"><div class="loading-txt">⏳ Yükleniyor...</div></div>
+    </div>
+
     <!-- GEÇMİŞ ETKİNLİKLER -->
     <div class="sec" id="sec-gecmis">
       <div class="sec-header">
@@ -847,12 +876,12 @@ function buildTabs() {
     {id:"program",label:"📚 Ders Programı"},
   ];
   if (currentRole!=="ogrenci") t.splice(1,0,{id:"nobetler",label:"🛡️ Nöbet"});
-  if (isManager()) { t.push({id:"kullanicilar",label:"👥 Kullanıcılar"}); t.push({id:"tanimlar",label:"⚙️ Tanımlar"}); t.push({id:"gecmis",label:"🗂 Geçmiş"}); }
+  if (isManager()) { t.push({id:"kullanicilar",label:"👥 Kullanıcılar"}); t.push({id:"tanimlar",label:"⚙️ Tanımlar"}); t.push({id:"gecmis",label:"🗂 Geçmiş"}); t.push({id:"olaylar",label:"📋 Olaylar"}); }
   if (isAdmin()) t.push({id:"yonetim",label:"📊 Yönetim"});
   return t;
 }
 
-function showSec(id) { document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active")); document.getElementById("sec-"+id)?.classList.add("active"); if(id==="gecmis") renderGecmis(); }
+function showSec(id) { document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active")); document.getElementById("sec-"+id)?.classList.add("active"); if(id==="gecmis") renderGecmis(); if(id==="olaylar") renderOlaylar(olaylarData); }
 function isAdmin() { return currentRole==="admin"; }
 function isManager() { return ["admin","mudur"].includes(currentRole); }
 function isKoord() { return ["admin","mudur","koordinator"].includes(currentRole); }
@@ -1012,7 +1041,7 @@ function updateOgretmenSelects() {
 // ── LISTENERS ──
 function startListeners() {
   listenDuyurular(); listenNobetler(); listenSinavlar(); listenEtut(); listenDeneme(); loadProgram();
-  if (isManager()) { listenKullanicilar(); listenGecmis(); setTimeout(otomatikSil, 3000); }
+  if (isManager()) { listenKullanicilar(); listenGecmis(); listenOlaylar(); setTimeout(otomatikSil, 3000); }
   if (isAdmin()) listenStats();
 }
 
@@ -1048,7 +1077,7 @@ window.addDuyuru = async () => {
   if(!b||!ic) return;
   await addDoc(collection(db,"duyurular"),{baslik:b,icerik:ic,oncelik:document.getElementById("dOncelik").value,hedef:document.getElementById("dHedef").value,tarihStr:(()=>{const n=new Date();const g=String(n.getDate()).padStart(2,'0');const m=String(n.getMonth()+1).padStart(2,'0');const y=n.getFullYear();return g+'.'+m+'.'+y;})(),ekleyen:currentUser.email,ts:serverTimestamp()});
   document.getElementById("dBaslik").value=""; document.getElementById("dIcerik").value="";
-  togglePanel("duyuruForm"); toast("Duyuru yayınlandı!");
+  togglePanel("duyuruForm"); toast("Duyuru yayınlandı!"); logOlay("ekle","duyurular",b,"Hedef: "+document.getElementById("dHedef").value);
 };
 
 // ── NÖBET ──
@@ -1284,8 +1313,8 @@ window.saveEtut = async function() {
     guncelleme:serverTimestamp()
   };
   const editId=document.getElementById("etutEditId").value;
-  if (editId) { await updateDoc(doc(db,"etut",editId),data); toast("Etüt güncellendi!"); }
-  else { data.ekleyen=currentUser.email; data.ts=serverTimestamp(); await addDoc(collection(db,"etut"),data); toast("Etüt eklendi!"); }
+  if (editId) { await updateDoc(doc(db,"etut",editId),data); toast("Etüt güncellendi!"); logOlay("guncelle","etut",b,t); }
+  else { data.ekleyen=currentUser.email; data.ts=serverTimestamp(); await addDoc(collection(db,"etut"),data); toast("Etüt eklendi!"); logOlay("ekle","etut",b,t+" · "+(data.ogretmen||"")); }
   closeEtutForm();
 };
 
@@ -1504,8 +1533,8 @@ window.saveDeneme = async function() {
     guncelleme:serverTimestamp()
   };
   const editId=document.getElementById("denemeEditId").value;
-  if (editId) { await updateDoc(doc(db,"deneme",editId),data); toast("Deneme güncellendi!"); }
-  else { data.ekleyen=currentUser.email; data.ts=serverTimestamp(); await addDoc(collection(db,"deneme"),data); toast("Deneme eklendi!"); }
+  if (editId) { await updateDoc(doc(db,"deneme",editId),data); toast("Deneme güncellendi!"); logOlay("guncelle","deneme",[data.tur,data.seri].filter(Boolean).join(" "),data.tarih); }
+  else { data.ekleyen=currentUser.email; data.ts=serverTimestamp(); await addDoc(collection(db,"deneme"),data); toast("Deneme eklendi!"); logOlay("ekle","deneme",[data.tur,data.seri].filter(Boolean).join(" "),data.tarih); }
   closeDenemeForm();
 };
 
@@ -1728,7 +1757,7 @@ function renderOgrenciKullanici() {
 
 window.updateRol = async function(uid,rol) {
   if(currentRole==="mudur"&&["admin","mudur"].includes(rol)){toast("Bu rolü atama yetkiniz yok!");return;}
-  await setDoc(doc(db,"users",uid),{rol},{merge:true}); toast("Rol güncellendi!");
+  await setDoc(doc(db,"users",uid),{rol},{merge:true}); logOlay("guncelle","users","Rol güncellendi","UID: "+uid+" → "+rol); toast("Rol güncellendi!");
 };
 window.updateBrans = async function(uid,brans) { await setDoc(doc(db,"users",uid),{brans},{merge:true}); toast("Branş güncellendi!"); };
 window.updateSinif = async function(uid,sinif) { await setDoc(doc(db,"users",uid),{sinif},{merge:true}); toast("Sınıf güncellendi!"); };
@@ -1740,7 +1769,7 @@ window.addTekOgrenci = async function() {
   const sinif = document.getElementById("toSinif").value;
   const numara = document.getElementById("toNumara").value.trim();
   if (!ad || !email || !sinif) { toast("Ad, e-posta ve sınıf zorunludur!"); return; }
-  await addDoc(collection(db,"ogrenciler"), {ad, email, sinif, numara});
+  await addDoc(collection(db,"ogrenciler"), {ad, email, sinif, numara}); logOlay("ekle","ogrenciler",ad,sinif+" No:"+numara);
   document.getElementById("toAd").value="";
   document.getElementById("toEmail").value="";
   document.getElementById("toSinif").value="";
@@ -1868,6 +1897,75 @@ window.toggleSilmeYetkisi = async function(uid, durum) {
   toast(durum ? "✅ Silme yetkisi verildi!" : "🔒 Silme yetkisi kaldırıldı!");
 };
 
+
+
+// ── OLAYLAR ──
+async function logOlay(tip, koleksiyon, baslik, detay="") {
+  try {
+    await addDoc(collection(db,"olaylar"), {
+      tip,        // "ekle" | "sil" | "guncelle"
+      koleksiyon,
+      baslik,
+      detay,
+      kullanici: currentUser?.displayName || currentUser?.email || "?",
+      kullaniciEmail: currentUser?.email || "",
+      ts: serverTimestamp()
+    });
+  } catch(e) { console.warn("Log hatası:", e); }
+}
+
+let olaylarData = [];
+function listenOlaylar() {
+  onSnapshot(query(collection(db,"olaylar"), orderBy("ts","desc")), snap => {
+    olaylarData = snap.docs.map(d=>({id:d.id,...d.data()})).slice(0,500);
+    renderOlaylar(olaylarData);
+  });
+}
+
+window.filterOlaylar = function() {
+  const tip = document.getElementById("olayTipFilter").value;
+  const kol = document.getElementById("olayKolFilter").value;
+  let filtered = olaylarData;
+  if(tip) filtered = filtered.filter(o=>o.tip===tip);
+  if(kol) filtered = filtered.filter(o=>o.koleksiyon===kol);
+  renderOlaylar(filtered);
+};
+
+function renderOlaylar(liste) {
+  const el = document.getElementById("olaylarList"); if(!el) return;
+  if(!liste.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Kayıt bulunamadı</div>'; return; }
+
+  const tipIcon = {ekle:"➕", sil:"🗑️", guncelle:"✏️"};
+  const tipRenk = {ekle:"rgba(16,185,129,0.15)", sil:"rgba(239,68,68,0.15)", guncelle:"rgba(245,158,11,0.15)"};
+  const tipBordur = {ekle:"rgba(16,185,129,0.3)", sil:"rgba(239,68,68,0.3)", guncelle:"rgba(245,158,11,0.3)"};
+  const kolAd = {duyurular:"📢 Duyuru", nobetler:"🛡️ Nöbet", sinavlar:"📋 Sınav",
+    etut:"📖 Etüt", deneme:"🎯 Deneme", ogrenciler:"👨‍🎓 Öğrenci", users:"👤 Kullanıcı",
+    tanimlar:"⚙️ Tanım", program:"📚 Program", ayarlar:"🏫 Okul Bilgisi"};
+
+  let html = '<div style="display:flex;flex-direction:column;gap:6px">';
+  liste.forEach(o => {
+    const tarih = o.ts?.toDate ? o.ts.toDate() : new Date();
+    const g=String(tarih.getDate()).padStart(2,"0"), m=String(tarih.getMonth()+1).padStart(2,"0"), y=tarih.getFullYear();
+    const sa=String(tarih.getHours()).padStart(2,"0"), dk=String(tarih.getMinutes()).padStart(2,"0");
+    const tarihStr = g+"."+m+"."+y+" "+sa+":"+dk;
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:10px;'+
+      'background:'+( tipRenk[o.tip]||"rgba(255,255,255,0.04)")+';border:1px solid '+(tipBordur[o.tip]||"rgba(255,255,255,0.08)")+'">';
+    html += '<span style="font-size:20px;flex-shrink:0">'+(tipIcon[o.tip]||"📌")+'</span>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+    html += '<span style="font-weight:700;font-size:14px">'+o.baslik+'</span>';
+    html += '<span style="font-size:11px;background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:5px;color:var(--muted)">'+(kolAd[o.koleksiyon]||o.koleksiyon)+'</span>';
+    html += '</div>';
+    if(o.detay) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+o.detay+'</div>';
+    html += '</div>';
+    html += '<div style="text-align:right;flex-shrink:0">';
+    html += '<div style="font-size:12px;font-weight:600">'+o.kullanici+'</div>';
+    html += '<div style="font-size:11px;color:var(--muted)">'+tarihStr+'</div>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
 
 // ── GEÇMİŞ ETKİNLİKLER ──
 function bugunTarih() { return new Date().toISOString().split("T")[0]; }
@@ -1998,6 +2096,7 @@ window.delDoc = async function(col,id) {
   const kolAd = {duyurular:"duyuru",nobetler:"nöbet kaydı",sinavlar:"sınav",etut:"etüt",deneme:"deneme",ogrenciler:"öğrenci kaydı",users:"kullanıcı"};
   if (!confirm("Bu "+(kolAd[col]||"kayıt")+"ı silmek istediğinize emin misiniz?\nBu işlem geri alınamaz!")) return;
   await deleteDoc(doc(db,col,id));
+  logOlay("sil",col,"Kayıt silindi","ID: "+id);
   toast("Silindi.");
 };
 
@@ -2025,7 +2124,7 @@ window.addEventListener('load', () => {
     'openDenemeForm','closeDenemeForm','saveDeneme','editDeneme',
     'selectProgSinif','handleExcel','handleOgrenciExcel','handleEtutExcel','etutExcelKaydet',
     'updateRol','updateBrans','updateSinif','silKullanici','delDoc','addTanim',
-    'addTekOgrenci','yedekAl','yedekYukle','yedekGeriYukleOnayla','silOgrenci','toggleSilmeYetkisi','saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
+    'addTekOgrenci','yedekAl','yedekYukle','yedekGeriYukleOnayla','silOgrenci','filterOlaylar','toggleSilmeYetkisi','saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
   const missing = required.filter(f => typeof window[f] !== 'function');
   if (missing.length) console.error('Eksik fonksiyonlar:', missing);
   else console.log('✅ Tüm fonksiyonlar tanımlı');
