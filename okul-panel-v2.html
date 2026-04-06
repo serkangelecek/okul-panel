@@ -325,7 +325,7 @@
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Gün</th><th>Öğretmen</th><th>Branş</th><th>Konum</th><th>Saat</th><th id="nobetDelTh"></th></tr></thead>
+            <thead><tr><th>Gün</th><th>Öğretmen</th><th>Branş</th><th>Konum</th><th>Saat</th><th>📍 Durum</th><th id="nobetDelTh"></th></tr></thead>
             <tbody id="nobetTbody"><tr><td colspan="6" class="loading-txt">⏳ Yükleniyor...</td></tr></tbody>
           </table>
         </div>
@@ -542,11 +542,39 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📍 Nöbet Yerleri</div>
-        <div class="tanim-list" id="konumTanimList"></div>
-        <div class="tanim-input-row">
-          <input class="finput" id="yeniKonum" placeholder="Koridor A, Bahçe..." style="max-width:220px">
-          <button class="btn btn-primary btn-sm" onclick="addTanim('konumlar','yeniKonum')">+ Ekle</button>
+        <div class="card-title">📍 Nöbet Yerleri & GPS</div>
+        <div class="info-box" style="margin-bottom:12px">
+          Okul dışı noktalar için koordinat girin — öğretmen nöbet saatinde o noktaya yakın mı kontrol edilir.<br>
+          <span style="font-size:11px">Okul içi noktalar için koordinat gerekmez, sadece okul binasında mı kontrolü yapılır.</span>
+        </div>
+        <!-- Okul koordinatı -->
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px">🏫 Okul Koordinatı (bina merkezi)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="finput" id="okulLat" placeholder="Enlem: 38.4192..." style="max-width:180px">
+            <input class="finput" id="okulLng" placeholder="Boylam: 27.1287..." style="max-width:180px">
+            <input class="finput" id="okulRadius" placeholder="Yarıçap (m): 100" style="max-width:130px" type="number">
+            <button class="btn btn-ghost btn-sm" onclick="okulKoordinatAl()">📍 GPS'ten Al</button>
+            <button class="btn btn-primary btn-sm" onclick="saveOkulKoordinat()">💾 Kaydet</button>
+          </div>
+          <div id="okulKoordDurum" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+        </div>
+        <!-- Nöbet yerleri listesi -->
+        <div id="konumTanimList" style="margin-bottom:10px"></div>
+        <!-- Yeni nöbet yeri ekle -->
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:12px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px">➕ Yeni Nöbet Yeri Ekle</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="finput" id="yeniKonum" placeholder="Servis Girişi, Bahçe Kapısı..." style="max-width:200px">
+            <select class="fselect" id="yeniKonumTip" style="max-width:130px">
+              <option value="ic">🏠 Okul İçi</option>
+              <option value="dis">🌍 Okul Dışı</option>
+            </select>
+            <input class="finput" id="yeniKonumLat" placeholder="Enlem (dışı ise)" style="max-width:160px">
+            <input class="finput" id="yeniKonumLng" placeholder="Boylam (dışı ise)" style="max-width:160px">
+            <button class="btn btn-ghost btn-sm" onclick="yeniKonumGPSAl()">📍 GPS'ten Al</button>
+            <button class="btn btn-primary btn-sm" onclick="addKonumGPS()">+ Ekle</button>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -736,7 +764,8 @@ const SINAV_TUR = {yazili:"📝 Yazılı",ulke:"🇹🇷 Ülke Geneli",konusma:"
 
 let currentUser=null, currentRole=null, currentSinif=null;
 let selectedProgSinif=null, programData={};
-let dersBranslar=[], siniflar=[], konumlar=[], ogretmenler=[];
+let dersBranslar=[], siniflar=[], konumlar=[], konumlarGPS={}, ogretmenler=[], okulKoordinat={lat:null,lng:null,radius:100};
+let nobetKonumCache={};
 let denemeTurleri=[], denemeSeri=[];
 let kullanicilarData=[], ogrencilerData=[];
 let etutData=[], sinavData=[], denemeData=[];
@@ -864,6 +893,7 @@ function setupApp() {
   showSec(tabs[0].id);
   loadOkulBilgileri();
   loadTanimlar();
+  loadOkulKoordinat();
   startListeners();
 }
 
@@ -1041,7 +1071,7 @@ function updateOgretmenSelects() {
 // ── LISTENERS ──
 function startListeners() {
   listenDuyurular(); listenNobetler(); listenSinavlar(); listenEtut(); listenDeneme(); loadProgram();
-  if (isManager()) { listenKullanicilar(); listenGecmis(); listenOlaylar(); setTimeout(otomatikSil, 3000); }
+  if (isManager()) { listenKullanicilar(); listenGecmis(); listenOlaylar(); listenNobetKonum(); setTimeout(otomatikSil, 3000); }
   if (isAdmin()) listenStats();
 }
 
@@ -1101,6 +1131,18 @@ function listenNobetler() {
         rows += '<td style="font-weight:600">' + userPhotoInline(n.ogretmen,24) + n.ogretmen + '</td>';
         rows += '<td style="color:var(--muted);font-size:12px">'+( n.brans||"")+'</td>';
         rows += '<td style="color:var(--muted)">'+n.konum+'</td>';
+        // GPS durum sütunu — admin/müdür için konum durumu
+        if(isManager()){
+          const ogEmail = n.ogretmenEmail;
+          // nobetKonum koleksiyonundan durum çek (zaten dinleniyor mu?)
+          const konumBilgi = nobetKonumCache[ogEmail];
+          if(konumBilgi){
+            const renk=konumBilgi.durum==="yerinde"||konumBilgi.durum==="okulda"?"#6ee7b7":"#fca5a5";
+            rows += '<td><span style="font-size:11px;color:'+renk+';font-weight:700">'+(konumBilgi.durum==="yerinde"||konumBilgi.durum==="okulda"?"✅ Görevde":"⚠️ "+konumBilgi.durum)+'</span><div style="font-size:10px;color:var(--muted)">'+(konumBilgi.mesajTxt||"")+'</div></td>';
+          } else {
+            rows += '<td style="color:var(--muted);font-size:11px">—</td>';
+          }
+        } else rows += '<td></td>';
         rows += '<td style="color:var(--accent);font-weight:600">'+n.saat+'</td>';
         if (isManager()) rows += '<td><button class="btn btn-danger btn-sm" onclick="delDoc(\'nobetler\',\''+n.id+'\')">🗑</button></td>';
         rows += '</tr>';
@@ -1899,6 +1941,136 @@ window.toggleSilmeYetkisi = async function(uid, durum) {
 
 
 
+
+// ── GPS / KONUM ──
+window.okulKoordinatAl = function() {
+  if(!navigator.geolocation){toast("❌ Tarayıcınız GPS desteklemiyor!");return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    document.getElementById("okulLat").value = pos.coords.latitude.toFixed(6);
+    document.getElementById("okulLng").value = pos.coords.longitude.toFixed(6);
+    document.getElementById("okulKoordDurum").textContent = "✅ Konum alındı: "+pos.coords.latitude.toFixed(4)+", "+pos.coords.longitude.toFixed(4);
+    toast("GPS konumu alındı!");
+  }, err=>{toast("❌ GPS hatası: "+err.message);}, {enableHighAccuracy:true,timeout:10000});
+};
+
+window.saveOkulKoordinat = async function() {
+  const lat = parseFloat(document.getElementById("okulLat").value);
+  const lng = parseFloat(document.getElementById("okulLng").value);
+  const radius = parseInt(document.getElementById("okulRadius").value)||100;
+  if(isNaN(lat)||isNaN(lng)){toast("Geçerli koordinat girin!");return;}
+  await setDoc(doc(db,"ayarlar","okulKoordinat"),{lat,lng,radius});
+  okulKoordinat={lat,lng,radius};
+  document.getElementById("okulKoordDurum").textContent="✅ Kaydedildi! Yarıçap: "+radius+"m";
+  toast("Okul koordinatı kaydedildi!");
+};
+
+window.yeniKonumGPSAl = function() {
+  if(!navigator.geolocation){toast("❌ GPS desteklenmiyor!");return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    document.getElementById("yeniKonumLat").value = pos.coords.latitude.toFixed(6);
+    document.getElementById("yeniKonumLng").value = pos.coords.longitude.toFixed(6);
+    toast("GPS konumu alındı!");
+  }, err=>{toast("❌ GPS hatası: "+err.message);}, {enableHighAccuracy:true,timeout:10000});
+};
+
+window.addKonumGPS = async function() {
+  const ad = document.getElementById("yeniKonum").value.trim();
+  const tip = document.getElementById("yeniKonumTip").value;
+  const lat = parseFloat(document.getElementById("yeniKonumLat").value)||null;
+  const lng = parseFloat(document.getElementById("yeniKonumLng").value)||null;
+  if(!ad){toast("Konum adı girin!");return;}
+  // konumlar listesine ekle (eski sistem uyumu için)
+  const snap = await getDoc(doc(db,"tanimlar","konumlar"));
+  const cur = snap.exists()?(snap.data().liste||[]):[];
+  if(!cur.includes(ad)) await setDoc(doc(db,"tanimlar","konumlar"),{liste:[...cur,ad]});
+  // GPS bilgisini ayrı kaydet
+  const gpsSnap = await getDoc(doc(db,"ayarlar","konumlarGPS"));
+  const gpsData = gpsSnap.exists()?(gpsSnap.data()||{}):{};
+  gpsData[ad] = {tip, lat, lng};
+  await setDoc(doc(db,"ayarlar","konumlarGPS"), gpsData);
+  konumlarGPS = gpsData;
+  document.getElementById("yeniKonum").value="";
+  document.getElementById("yeniKonumLat").value="";
+  document.getElementById("yeniKonumLng").value="";
+  toast("Nöbet yeri eklendi!");
+};
+
+// Mesafe hesaplama (Haversine)
+function mesafeHesapla(lat1,lng1,lat2,lng2) {
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// Öğretmen konumunu kontrol et ve Firebase'e yaz
+window.nobetKonumKontrol = async function() {
+  if(!navigator.geolocation){toast("GPS desteklenmiyor!");return;}
+  const btn = document.getElementById("nobetKonumBtn");
+  if(btn) btn.textContent="📡 Konum alınıyor...";
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude:lat, longitude:lng, accuracy} = pos.coords;
+    // Kullanıcının bugünkü nöbetini bul
+    const gun = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][new Date().getDay()];
+    const benimNobet = nobetler.find(n=>n.gun===gun&&(n.ogretmenEmail===currentUser?.email||n.ogretmen===currentUser?.displayName));
+    let durum="bilinmiyor", mesafe=null, mesajTxt="";
+    if(benimNobet){
+      const konumAd = benimNobet.konum;
+      const gpsInfo = konumlarGPS[konumAd];
+      if(gpsInfo?.tip==="dis"&&gpsInfo?.lat&&gpsInfo?.lng){
+        // Dış nokta — o noktaya mesafeyi kontrol et
+        mesafe = Math.round(mesafeHesapla(lat,lng,gpsInfo.lat,gpsInfo.lng));
+        durum = mesafe<=50?"yerinde":"uzakta";
+        mesajTxt = konumAd+" — "+mesafe+"m uzakta";
+      } else if(okulKoordinat.lat){
+        // İç nokta — okul binasına mesafeyi kontrol et
+        mesafe = Math.round(mesafeHesapla(lat,lng,okulKoordinat.lat,okulKoordinat.lng));
+        durum = mesafe<=okulKoordinat.radius?"okulda":"okulda değil";
+        mesajTxt = "Okul mesafesi: "+mesafe+"m ("+konumAd+")";
+      }
+    }
+    // Firebase'e yaz
+    await setDoc(doc(db,"nobetKonum",currentUser.uid),{
+      lat, lng, accuracy: Math.round(accuracy),
+      durum, mesafe, mesajTxt,
+      ogretmen: currentUser.displayName||currentUser.email,
+      ogretmenEmail: currentUser.email,
+      ts: serverTimestamp()
+    });
+    if(btn) btn.textContent="✅ Konum Gönderildi";
+    toast("📍 Konum gönderildi! "+mesajTxt);
+    setTimeout(()=>{if(btn)btn.textContent="📍 Konumumu Gönder";},3000);
+  }, err=>{
+    if(btn) btn.textContent="📍 Konumumu Gönder";
+    toast("❌ GPS hatası: "+err.message);
+  },{enableHighAccuracy:true,timeout:15000});
+};
+
+// Okul koordinatını yükle
+function listenNobetKonum() {
+  onSnapshot(collection(db,"nobetKonum"), snap=>{
+    nobetKonumCache={};
+    snap.docs.forEach(d=>{
+      const data=d.data();
+      if(data.ogretmenEmail) nobetKonumCache[data.ogretmenEmail]=data;
+    });
+    // Nöbet listesini yenile
+    listenNobetler();
+  });
+}
+
+function loadOkulKoordinat() {
+  onSnapshot(doc(db,"ayarlar","okulKoordinat"), snap=>{
+    if(!snap.exists()) return;
+    okulKoordinat = snap.data();
+    const el = document.getElementById("okulLat"); if(el) el.value=okulKoordinat.lat||"";
+    const el2 = document.getElementById("okulLng"); if(el2) el2.value=okulKoordinat.lng||"";
+    const el3 = document.getElementById("okulRadius"); if(el3) el3.value=okulKoordinat.radius||100;
+  });
+  onSnapshot(doc(db,"ayarlar","konumlarGPS"), snap=>{
+    if(snap.exists()) konumlarGPS = snap.data();
+  });
+}
+
 // ── OLAYLAR ──
 async function logOlay(tip, koleksiyon, baslik, detay="") {
   try {
@@ -2124,7 +2296,7 @@ window.addEventListener('load', () => {
     'openDenemeForm','closeDenemeForm','saveDeneme','editDeneme',
     'selectProgSinif','handleExcel','handleOgrenciExcel','handleEtutExcel','etutExcelKaydet',
     'updateRol','updateBrans','updateSinif','silKullanici','delDoc','addTanim',
-    'addTekOgrenci','yedekAl','yedekYukle','yedekGeriYukleOnayla','silOgrenci','filterOlaylar','toggleSilmeYetkisi','saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
+    'addTekOgrenci','yedekAl','yedekYukle','yedekGeriYukleOnayla','silOgrenci','filterOlaylar','toggleSilmeYetkisi','nobetKonumKontrol','okulKoordinatAl','saveOkulKoordinat','yeniKonumGPSAl','addKonumGPS','saveOkulBilgileri','previewLogo','kalanGunBadge','userPhoto','userPhotoInline'];
   const missing = required.filter(f => typeof window[f] !== 'function');
   if (missing.length) console.error('Eksik fonksiyonlar:', missing);
   else console.log('✅ Tüm fonksiyonlar tanımlı');
