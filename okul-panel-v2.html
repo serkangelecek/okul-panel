@@ -575,6 +575,14 @@
     <div class="sec" id="sec-yonetim">
       <div class="sec-title" style="margin-bottom:18px">📊 Yönetim Paneli</div>
       <div class="stats-grid" id="statsGrid"></div>
+      <div class="card">
+        <div class="card-title">💾 Veri Yedeği</div>
+        <div class="info-box">Silme işlemi yapabilmek için önce yedek almanız zorunludur. Yedek dosyasına kullanıcı adı ve zaman damgası işlenir.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn btn-green" onclick="yedekAl()">⬇️ Tam Yedek Al (JSON)</button>
+          <span id="yedekDurum" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
       <div class="card"><div class="card-title">Sistem Bilgisi</div><div id="sistemDurum"></div></div>
     </div>
 
@@ -1434,11 +1442,7 @@ window.updateRol = async function(uid,rol) {
 };
 window.updateBrans = async function(uid,brans) { await setDoc(doc(db,"users",uid),{brans},{merge:true}); toast("Branş güncellendi!"); };
 window.updateSinif = async function(uid,sinif) { await setDoc(doc(db,"users",uid),{sinif},{merge:true}); toast("Sınıf güncellendi!"); };
-window.silKullanici = async function(uid) {
-  if (!confirm("Bu kullanıcıyı sistemden silmek istediğinize emin misiniz?")) return;
-  await deleteDoc(doc(db,"users",uid));
-  toast("Kullanıcı silindi!");
-};
+
 
 window.addTekOgrenci = async function() {
   const ad = document.getElementById("toAd").value.trim();
@@ -1453,6 +1457,40 @@ window.addTekOgrenci = async function() {
   document.getElementById("toNumara").value="";
   togglePanel("tekOgrenciForm");
   toast("Öğrenci eklendi!");
+};
+
+
+// ── YEDEK ──
+window.yedekAl = async function() {
+  const durum = document.getElementById("yedekDurum");
+  durum.textContent = "⏳ Yedek hazırlanıyor...";
+  try {
+    const koleksiyonlar = ["duyurular","nobetler","sinavlar","etut","deneme","ogrenciler","users","program","tanimlar","ayarlar"];
+    const yedek = { meta: { tarih: new Date().toISOString(), kullanici: currentUser?.displayName||currentUser?.email||"bilinmiyor", versiyon:"1.0" }, data: {} };
+    for (const kol of koleksiyonlar) {
+      try {
+        const snap = await getDocs(collection(db, kol));
+        yedek.data[kol] = {};
+        snap.docs.forEach(d => { yedek.data[kol][d.id] = d.data(); });
+      } catch(e) { yedek.data[kol] = {}; }
+    }
+    // Dosya adı: kullaniciadi_yedek_2026-04-05_23-45
+    const simdi = new Date();
+    const gun = simdi.toLocaleDateString("tr-TR").replace(/\./g,"-");
+    const saat = simdi.toTimeString().slice(0,5).replace(":","-");
+    const kullaniciAdi = (currentUser?.displayName||currentUser?.email||"kullanici").replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g,"_");
+    const dosyaAdi = kullaniciAdi+"_yedek_"+gun+"_"+saat+".json";
+    const blob = new Blob([JSON.stringify(yedek, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download=dosyaAdi; a.click();
+    URL.revokeObjectURL(url);
+    localStorage.setItem("sonYedekZamani", Date.now().toString());
+    durum.textContent = "✅ Yedek alındı: " + dosyaAdi;
+    toast("✅ Yedek indirildi: " + dosyaAdi);
+  } catch(e) {
+    durum.textContent = "❌ Hata: " + e.message;
+    toast("❌ Yedek alınamadı!");
+  }
 };
 
 // ── YÖNETİM ──
@@ -1478,7 +1516,36 @@ function listenStats() {
 }
 
 // ── HELPERS ──
-window.delDoc = async function(col,id) { await deleteDoc(doc(db,col,id)); toast("Silindi."); };
+window.delDoc = async function(col,id) {
+  // Yedek kontrolü
+  const sonYedek = localStorage.getItem("sonYedekZamani");
+  if (!sonYedek) {
+    toast("⚠️ Silmeden önce yedek almalısınız! Yönetim → Veri Yedeği");
+    return;
+  }
+  const fark = Date.now() - parseInt(sonYedek);
+  const saatFark = fark / (1000 * 60 * 60);
+  if (saatFark > 24) {
+    toast("⚠️ Son yedeğiniz 24 saatten eski! Lütfen yeni yedek alın.");
+    return;
+  }
+  // Onay mesajı
+  const kolAd = {duyurular:"duyuru", nobetler:"nöbet kaydı", sinavlar:"sınav", etut:"etüt", deneme:"deneme", ogrenciler:"öğrenci kaydı", users:"kullanıcı"};
+  const ad = kolAd[col] || "kayıt";
+  if (!confirm("Bu " + ad + "ı silmek istediğinize emin misiniz?\nBu işlem geri alınamaz!")) return;
+  await deleteDoc(doc(db,col,id));
+  toast("Silindi.");
+};
+
+window.silKullanici = async function(uid) {
+  const sonYedek = localStorage.getItem("sonYedekZamani");
+  if (!sonYedek || (Date.now() - parseInt(sonYedek)) > 1000*60*60*24) {
+    toast("⚠️ Silmeden önce yedek almalısınız! Yönetim → Veri Yedeği"); return;
+  }
+  if (!confirm("Bu kullanıcıyı sistemden silmek istediğinize emin misiniz?")) return;
+  await deleteDoc(doc(db,"users",uid));
+  toast("Kullanıcı silindi!");
+};
 window.togglePanel = function(id) { document.getElementById(id).classList.toggle("open"); };
 function showEl(id){document.getElementById(id).style.display="flex";}
 function hideEl(id){document.getElementById(id).style.display="none";}
