@@ -1692,8 +1692,21 @@ function renderGecmis() {
     html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
     html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<span style="font-size:24px">'+e.icon+'</span>';
-    html += '<div><div style="font-weight:700;font-size:15px">'+(e.baslik||e.ders||e.tipAd)+'</div>';
-    html += '<div style="font-size:12px;color:var(--muted)">'+(g+"/"+m+"/"+y)+(e.saat?" · "+e.saat:"")+(e.yer?" · "+e.yer:"")+'</div></div></div>';
+    // Tip'e göre başlık oluştur
+    let gecmisBaslik = "";
+    if(e.tip==="deneme") gecmisBaslik = [e.tur,e.seri].filter(Boolean).join(" – ") || "Deneme";
+    else if(e.tip==="sinav") gecmisBaslik = e.ders || "Sınav";
+    else if(e.tip==="etut") gecmisBaslik = e.baslik || e.ders || "Etüt";
+    else gecmisBaslik = e.baslik||e.ders||e.tipAd||"";
+    // Alt bilgi
+    let gecmisAlt = g+"/"+m+"/"+y;
+    if(e.saat) gecmisAlt += " · "+e.saat;
+    if(e.yer||e.salon) gecmisAlt += " · "+(e.yer||e.salon||"");
+    if(e.ogretmen) gecmisAlt += " · "+e.ogretmen;
+    if(e.siniflar&&e.siniflar.length) gecmisAlt += " · "+e.siniflar.join(", ");
+    if(e.sinif) gecmisAlt += " · "+e.sinif;
+    html += '<div><div style="font-weight:700;font-size:15px">'+gecmisBaslik+'</div>';
+    html += '<div style="font-size:12px;color:var(--muted)">'+gecmisAlt+'</div></div></div>';
     html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<span style="font-size:11px;color:'+renk+'">'+( silinecek>0?"⏳ "+silinecek+" gün sonra silinir":"🗑 Bugün silinecek")+'</span>';
     if(isAdmin()||isManager()) html += '<button class="btn btn-danger btn-sm" onclick="delDoc(\''+e.tip+'\',' +'\''+e.id+'\')">🗑 Sil</button>';
