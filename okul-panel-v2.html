@@ -640,8 +640,8 @@
         <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Her güncelleme ile yapılan değişiklikler</div>
         <div style="display:flex;flex-direction:column;gap:0">
           <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--card-border)">
-            <div style="flex-shrink:0;text-align:right;min-width:60px"><span style="background:rgba(245,158,11,0.2);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">v2.12</span></div>
-            <div><div style="font-weight:600;font-size:13px">06 Nisan 2026</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Etüt Excel aktarımı (ad soyad ile öğrenci eşleştirme), format metni düzeltmesi</div></div>
+            <div style="flex-shrink:0;text-align:right;min-width:60px"><span style="background:rgba(245,158,11,0.2);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">v2.13</span></div>
+            <div><div style="font-weight:600;font-size:13px">06 Nisan 2026</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Etüt Excel aktarımı, tüm sistemde tarih formatı gg.aa.yyyy Günü, versiyon geçmişi</div></div>
           </div>
           <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--card-border)">
             <div style="flex-shrink:0;text-align:right;min-width:60px"><span style="background:rgba(255,255,255,0.08);color:var(--muted);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">v2.11</span></div>
@@ -732,6 +732,33 @@ window.userPhotoInline = function(displayName, size=24) {
 };
 
 // ── KALAN GÜN ──
+// Tarih formatlama — yyyy-aa-gg → gg.aa.yyyy Günü
+const TR_GUNLER_K = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+window.tarihGoster = function(tarih) {
+  if(!tarih) return "—";
+  // yyyy-aa-gg formatını dönüştür
+  if(tarih.includes("-") && tarih.length===10) {
+    const [y,m,g] = tarih.split("-");
+    const d = new Date(tarih+"T00:00:00");
+    const gun = TR_GUNLER_K[d.getDay()];
+    return g+"."+m+"."+y+" "+gun;
+  }
+  return tarih;
+};
+
+// Tarih formatlama: yyyy-aa-gg → gg.aa.yyyy Günü
+const TR_GUNLER_K = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+window.tarihGoster = function(tarih) {
+  if(!tarih||tarih==="—") return "—";
+  if(tarih.includes("-") && tarih.length===10) {
+    const [y,m,g] = tarih.split("-");
+    const d = new Date(tarih+"T00:00:00");
+    const gun = isNaN(d.getTime()) ? "" : " "+TR_GUNLER_K[d.getDay()];
+    return g+"."+m+"."+y+gun;
+  }
+  return tarih;
+};
+
 window.kalanGunBadge = function(tarih) {
   if (!tarih) return '';
   const bugun = new Date(); bugun.setHours(0,0,0,0);
@@ -1033,7 +1060,7 @@ function listenDuyurular() {
 window.addDuyuru = async () => {
   const b=document.getElementById("dBaslik").value.trim(), ic=document.getElementById("dIcerik").value.trim();
   if(!b||!ic) return;
-  await addDoc(collection(db,"duyurular"),{baslik:b,icerik:ic,oncelik:document.getElementById("dOncelik").value,hedef:document.getElementById("dHedef").value,tarihStr:new Date().toISOString().split("T")[0],ekleyen:currentUser.email,ts:serverTimestamp()});
+  await addDoc(collection(db,"duyurular"),{baslik:b,icerik:ic,oncelik:document.getElementById("dOncelik").value,hedef:document.getElementById("dHedef").value,tarihStr:(()=>{const n=new Date();const g=String(n.getDate()).padStart(2,'0');const m=String(n.getMonth()+1).padStart(2,'0');const y=n.getFullYear();return g+'.'+m+'.'+y;})(),ekleyen:currentUser.email,ts:serverTimestamp()});
   document.getElementById("dBaslik").value=""; document.getElementById("dIcerik").value="";
   togglePanel("duyuruForm"); toast("Duyuru yayınlandı!");
 };
@@ -1103,7 +1130,7 @@ function listenSinavlar() {
       html += kalanGunBadge(s.tarih);
       html += '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:13px;margin-bottom:10px">';
-      html += '<div>📅 '+(s.tarih||"—")+'</div><div>🕐 '+(s.saat||"—")+'</div><div>⏱ '+(s.sure||"—")+'</div><div>🏫 '+(s.salon||"—")+'</div></div>';
+      html += '<div>📅 '+tarihGoster(s.tarih)+'</div><div>🕐 '+(s.saat||"—")+'</div><div>⏱ '+(s.sure||"—")+'</div><div>🏫 '+(s.salon||"—")+'</div></div>';
       if (s.siniflar&&s.siniflar.length) {
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
         s.siniflar.forEach(sf => html += '<span class="gun-badge">'+sf+'</span>');
@@ -1148,7 +1175,7 @@ function listenEtut() {
       html += '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:16px">'+e.baslik+'</span>';
       html += '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;font-size:13px;margin-bottom:10px">';
-      html += '<div>📚 '+( e.ders||"—")+'</div><div>📅 '+( e.tarih||"—")+'</div>';
+      html += '<div>📚 '+(e.ders||"—")+'</div><div>📅 '+tarihGoster(e.tarih)+'</div>';
       html += '<div>🕐 '+( e.saat||"—")+'</div><div>🏫 '+( e.yer||"—")+'</div>';
       if (e.ogretmen) html += '<div style="grid-column:1/-1">'+userPhotoInline(e.ogretmen,20)+'👤 '+e.ogretmen+'</div>';
       html += '</div>';
@@ -1325,7 +1352,13 @@ window.etutExcelKaydet = async function(rows) {
     try {
       const baslik = String(r[0]||"").trim();
       const ders   = String(r[1]||"").trim();
-      const tarih  = String(r[2]||"").trim();
+      // Tarih: gg.aa.yyyy → yyyy-aa-gg dönüşümü
+      let tarihRaw = String(r[2]||"").trim();
+      let tarih = tarihRaw;
+      if(tarihRaw.includes(".")) {
+        const [tg,tm,ty] = tarihRaw.split(".");
+        tarih = (ty||"")+"-"+(tm||"").padStart(2,"0")+"-"+(tg||"").padStart(2,"0");
+      }
       const saat   = String(r[3]||"").trim();
       const yer    = String(r[4]||"").trim();
       const ogretmen = String(r[5]||"").trim();
@@ -1395,7 +1428,7 @@ function listenDeneme() {
       html += kalanGunBadge(d.tarih);
       html += '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:13px;margin-bottom:10px">';
-      html += '<div>📅 '+(d.tarih||"—")+'</div><div>🕐 '+(d.saat||"—")+'</div><div>⏱ '+(d.sure||"—")+'</div><div>🏫 '+(d.yer||"—")+'</div></div>';
+      html += '<div>📅 '+tarihGoster(d.tarih)+'</div><div>🕐 '+(d.saat||"—")+'</div><div>⏱ '+(d.sure||"—")+'</div><div>🏫 '+(d.yer||"—")+'</div></div>';
       if (d.siniflar&&d.siniflar.length) {
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
         d.siniflar.forEach(sf => html += '<span class="gun-badge">'+sf+'</span>');
@@ -1859,7 +1892,7 @@ function renderGecmis() {
     else if(e.tip==="etut") gecmisBaslik = e.baslik || e.ders || "Etüt";
     else gecmisBaslik = e.baslik||e.ders||e.tipAd||"";
     // Alt bilgi
-    let gecmisAlt = g+"/"+m+"/"+y;
+    let gecmisAlt = tarihGoster(tarih);
     if(e.saat) gecmisAlt += " · "+e.saat;
     if(e.yer||e.salon) gecmisAlt += " · "+(e.yer||e.salon||"");
     if(e.ogretmen) gecmisAlt += " · "+e.ogretmen;
