@@ -1614,23 +1614,27 @@ function listenStats() {
 
 // ── HELPERS ──
 window.delDoc = async function(col,id) {
-  if(!isAdmin()){toast("⛔ Silme yetkiniz yok! Sadece Admin silebilir.");return;}
+  // Koleksiyona göre yetki kontrolü
+  const mudurKol = ["duyurular","nobetler","sinavlar","deneme"];
+  const koordKol = ["etut"];
+  // Kullanıcının özel silme yetkisi var mı?
+  const benimBilgim = kullanicilarData.find(x=>x.email===currentUser?.email);
+  const ozelYetki = benimBilgim?.silmeYetkisi===true;
+
+  if (mudurKol.includes(col)) {
+    if(!isManager() && !ozelYetki){toast("⛔ Bu işlem için Admin veya Müdür yetkisi gereklidir.");return;}
+  } else if (koordKol.includes(col)) {
+    if(!isKoord() && !ozelYetki){toast("⛔ Bu işlem için en az Koordinatör yetkisi gereklidir.");return;}
+  } else {
+    if(!isAdmin()){toast("⛔ Bu işlem için Admin yetkisi gereklidir.");return;}
+  }
   // Yedek kontrolü
   const sonYedek = localStorage.getItem("sonYedekZamani");
-  if (!sonYedek) {
-    toast("⚠️ Silmeden önce yedek almalısınız! Yönetim → Veri Yedeği");
-    return;
-  }
-  const fark = Date.now() - parseInt(sonYedek);
-  const saatFark = fark / (1000 * 60 * 60);
-  if (saatFark > 24) {
-    toast("⚠️ Son yedeğiniz 24 saatten eski! Lütfen yeni yedek alın.");
-    return;
-  }
-  // Onay mesajı
-  const kolAd = {duyurular:"duyuru", nobetler:"nöbet kaydı", sinavlar:"sınav", etut:"etüt", deneme:"deneme", ogrenciler:"öğrenci kaydı", users:"kullanıcı"};
-  const ad = kolAd[col] || "kayıt";
-  if (!confirm("Bu " + ad + "ı silmek istediğinize emin misiniz?\nBu işlem geri alınamaz!")) return;
+  if (!sonYedek) { toast("⚠️ Silmeden önce yedek almalısınız! Yönetim → Veri Yedeği"); return; }
+  if ((Date.now()-parseInt(sonYedek)) > 1000*60*60*24) { toast("⚠️ Son yedeğiniz 24 saatten eski! Lütfen yeni yedek alın."); return; }
+  // Onay
+  const kolAd = {duyurular:"duyuru",nobetler:"nöbet kaydı",sinavlar:"sınav",etut:"etüt",deneme:"deneme",ogrenciler:"öğrenci kaydı",users:"kullanıcı"};
+  if (!confirm("Bu "+(kolAd[col]||"kayıt")+"ı silmek istediğinize emin misiniz?\nBu işlem geri alınamaz!")) return;
   await deleteDoc(doc(db,col,id));
   toast("Silindi.");
 };
