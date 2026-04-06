@@ -577,6 +577,26 @@
       </div>
     </div>
 
+    <!-- GEÇMİŞ ETKİNLİKLER -->
+    <div class="sec" id="sec-gecmis">
+      <div class="sec-header">
+        <span class="sec-title">🗂 Geçmiş Etkinlikler</span>
+        <span style="font-size:12px;color:var(--muted)">26 günden eski kayıtlar otomatik silinir</span>
+      </div>
+      <div class="info-box">Tarihi geçmiş etüt, sınav ve denemeler burada listelenir. 26 gün sonra otomatik olarak silinir.</div>
+      <div id="gecmisGrid" style="display:flex;flex-direction:column;gap:10px"><div class="loading-txt">⏳ Yükleniyor...</div></div>
+    </div>
+
+    <!-- GEÇMİŞ ETKİNLİKLER -->
+    <div class="sec" id="sec-gecmis">
+      <div class="sec-header">
+        <span class="sec-title">🗂 Geçmiş Etkinlikler</span>
+        <span style="font-size:12px;color:var(--muted)">26 günden eski kayıtlar otomatik silinir</span>
+      </div>
+      <div class="info-box">Tarihi geçmiş etüt, sınav ve denemeler burada listelenir. 26 gün sonra otomatik olarak silinir.</div>
+      <div id="gecmisGrid" style="display:flex;flex-direction:column;gap:10px"><div class="loading-txt">⏳ Yükleniyor...</div></div>
+    </div>
+
     <!-- YÖNETİM -->
     <div class="sec" id="sec-yonetim">
       <div class="sec-title" style="margin-bottom:18px">📊 Yönetim Paneli</div>
@@ -634,7 +654,7 @@ let selectedProgSinif=null, programData={};
 let dersBranslar=[], siniflar=[], konumlar=[], ogretmenler=[];
 let denemeTurleri=[], denemeSeri=[];
 let kullanicilarData=[], ogrencilerData=[];
-let etutData=[], denemeData=[];
+let etutData=[], sinavData=[], denemeData=[];
 let seciliOgrencilerMap={};
 
 // ── USER PHOTO HELPER ──
@@ -758,7 +778,7 @@ function buildTabs() {
     {id:"program",label:"📚 Ders Programı"},
   ];
   if (currentRole!=="ogrenci") t.splice(1,0,{id:"nobetler",label:"🛡️ Nöbet"});
-  if (isManager()) { t.push({id:"kullanicilar",label:"👥 Kullanıcılar"}); t.push({id:"tanimlar",label:"⚙️ Tanımlar"}); }
+  if (isManager()) { t.push({id:"kullanicilar",label:"👥 Kullanıcılar"}); t.push({id:"tanimlar",label:"⚙️ Tanımlar"}); t.push({id:"gecmis",label:"🗂 Geçmiş"}); }
   if (isAdmin()) t.push({id:"yonetim",label:"📊 Yönetim"});
   return t;
 }
@@ -923,7 +943,7 @@ function updateOgretmenSelects() {
 // ── LISTENERS ──
 function startListeners() {
   listenDuyurular(); listenNobetler(); listenSinavlar(); listenEtut(); listenDeneme(); loadProgram();
-  if (isManager()) listenKullanicilar();
+  if (isManager()) { listenKullanicilar(); setTimeout(otomatikSil, 3000); }
   if (isAdmin()) listenStats();
 }
 
@@ -1002,7 +1022,8 @@ window.addNobet = async () => {
 // ── SINAVLAR ──
 function listenSinavlar() {
   onSnapshot(collection(db,"sinavlar"), snap => {
-    let items = snap.docs.map(d=>({id:d.id,...d.data()}));
+    sinavData = snap.docs.map(d=>({id:d.id,...d.data()}));
+    let items = [...sinavData];
     if (currentRole==="ogrenci"&&currentSinif) items = items.filter(s=>s.siniflar&&s.siniflar.includes(currentSinif));
     if (["ogretmen","koordinator"].includes(currentRole)) items = items.filter(s=>s.ogretmenEmail===currentUser.email||s.ogretmen===currentUser.displayName);
     items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
@@ -1640,6 +1661,75 @@ window.toggleSilmeYetkisi = async function(uid, durum) {
   await setDoc(doc(db,"users",uid),{silmeYetkisi:durum},{merge:true});
   toast(durum ? "✅ Silme yetkisi verildi!" : "🔒 Silme yetkisi kaldırıldı!");
 };
+
+
+// ── GEÇMİŞ ETKİNLİKLER ──
+function bugunTarih() { return new Date().toISOString().split("T")[0]; }
+
+function listenGecmis() {
+  // Tüm koleksiyonları dinle, geçmişleri filtrele
+  const guncelle = () => renderGecmis();
+  onSnapshot(collection(db,"etut"), snap => { guncelle(); });
+  onSnapshot(collection(db,"sinavlar"), snap => { guncelle(); });
+  onSnapshot(collection(db,"deneme"), snap => { guncelle(); });
+}
+
+function renderGecmis() {
+  const el = document.getElementById("gecmisGrid"); if(!el) return;
+  const bugun = bugunTarih();
+
+  const gecmis = [
+    ...etutData.filter(e=>e.tarih&&e.tarih<bugun).map(e=>({...e,tip:"etut",tipAd:"Etüt",icon:"📖",renk:"rgba(139,92,246,0.2)"})),
+    ...sinavData.filter(s=>s.tarih&&s.tarih<bugun).map(s=>({...s,tip:"sinav",tipAd:"Sınav",icon:"📋",renk:"rgba(239,68,68,0.2)"})),
+    ...denemeData.filter(d=>d.tarih&&d.tarih<bugun).map(d=>({...d,tip:"deneme",tipAd:"Deneme",icon:"🎯",renk:"rgba(16,185,129,0.2)"})),
+  ].sort((a,b)=>(b.tarih||"").localeCompare(a.tarih||""));
+
+  if(!gecmis.length){el.innerHTML='<div class="empty"><div class="empty-icon">🗂</div>Geçmiş etkinlik yok</div>';return;}
+
+  let html="";
+  gecmis.forEach(e=>{
+    const tarih = e.tarih||"";
+    const [y,m,g] = tarih.split("-");
+    const tarihGun = new Date(tarih);
+    const farkGun = Math.floor((new Date()-tarihGun)/(1000*60*60*24));
+    const silinecek = 26-farkGun;
+    const renk = silinecek<=3?"#fca5a5":silinecek<=7?"#fcd34d":"#94a3b8";
+
+    html += '<div class="card" style="border-left:4px solid '+e.renk+';padding:14px 18px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<span style="font-size:24px">'+e.icon+'</span>';
+    html += '<div><div style="font-weight:700;font-size:15px">'+(e.baslik||e.ders||e.tipAd)+'</div>';
+    html += '<div style="font-size:12px;color:var(--muted)">'+(g+"/"+m+"/"+y)+(e.saat?" · "+e.saat:"")+(e.yer?" · "+e.yer:"")+'</div></div></div>';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<span style="font-size:11px;color:'+renk+'">'+( silinecek>0?"⏳ "+silinecek+" gün sonra silinir":"🗑 Bugün silinecek")+'</span>';
+    if(isAdmin()||isManager()) html += '<button class="btn btn-danger btn-sm" onclick="delDoc(''+e.tip+'',''+e.id+'')">🗑 Sil</button>';
+    html += '</div></div></div>';
+  });
+  el.innerHTML = html;
+}
+
+// Otomatik silme — 26 günden eski kayıtları sil
+async function otomatikSil() {
+  const bugun = bugunTarih();
+  const sinir = new Date();
+  sinir.setDate(sinir.getDate()-26);
+  const sinirTarih = sinir.toISOString().split("T")[0];
+
+  const kollar = [
+    {kol:"etut", data:etutData},
+    {kol:"sinavlar", data:sinavData},
+    {kol:"deneme", data:denemeData},
+  ];
+  let silinenSayi = 0;
+  for(const {kol, data} of kollar){
+    const eskiler = data.filter(e=>e.tarih&&e.tarih<sinirTarih);
+    for(const e of eskiler){
+      try{ await deleteDoc(doc(db,kol,e.id)); silinenSayi++; }catch(err){}
+    }
+  }
+  if(silinenSayi>0) toast("🗑 "+silinenSayi+" eski kayıt otomatik silindi (26+ gün).");
+}
 
 // ── YÖNETİM ──
 function listenStats() {
