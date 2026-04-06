@@ -904,7 +904,7 @@ function setupApp() {
   if (isKoord()) document.querySelectorAll(".krd-btn").forEach(el=>el.style.display="inline-flex");
   if (isAdmin()) document.querySelectorAll(".adm-btn").forEach(el=>el.style.display="inline-flex");
   // GPS kutusu — öğretmen ve koordinatör için göster
-  if(["ogretmen","koordinator"].includes(currentRole)) {
+  if(["ogretmen","koordinator","mudur","admin"].includes(currentRole)) {
     const gpsBox = document.getElementById("nobetGpsBox");
     if(gpsBox) gpsBox.style.display="block";
     // Konum durumunu dinle
@@ -1155,7 +1155,7 @@ window.addDuyuru = async () => {
 function listenNobetler() {
   onSnapshot(collection(db,"nobetler"), snap => {
     const nobetler = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if (["ogretmen","koordinator"].includes(currentRole)) {
+    if (["ogretmen","koordinator","mudur","admin"].includes(currentRole)) {
       const _email = (currentUser.email||"").toLowerCase();
       const _ad = (currentUser.displayName||"").toLowerCase();
       const mine = nobetler.filter(n=>
