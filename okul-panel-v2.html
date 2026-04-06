@@ -1271,7 +1271,7 @@ window.handleEtutExcel = async function(input) {
       prevHtml += '</tbody></table></div>';
       prevHtml += '<div style="margin-top:10px;display:flex;gap:8px">';
       prevHtml += '<button class="btn btn-purple" onclick="etutExcelKaydet(window._etutExcelRows)">💾 Tümünü Kaydet ('+dataRows.length+' etüt)</button>';
-      prevHtml += '<button class="btn btn-ghost btn-sm" onclick="document.getElementById('etutExcelPreview').innerHTML='';document.getElementById('etutExcelFile').value=''">İptal</button>';
+      prevHtml += '<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'etutExcelPreview\').innerHTML=\'\';document.getElementById(\'etutExcelFile\').value=\'\'">İptal</button>';
       prevHtml += '</div>';
       preview.innerHTML = prevHtml;
       window._etutExcelRows = dataRows;
