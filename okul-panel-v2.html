@@ -587,16 +587,6 @@
       <div id="gecmisGrid" style="display:flex;flex-direction:column;gap:10px"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
 
-    <!-- GEÇMİŞ ETKİNLİKLER -->
-    <div class="sec" id="sec-gecmis">
-      <div class="sec-header">
-        <span class="sec-title">🗂 Geçmiş Etkinlikler</span>
-        <span style="font-size:12px;color:var(--muted)">26 günden eski kayıtlar otomatik silinir</span>
-      </div>
-      <div class="info-box">Tarihi geçmiş etüt, sınav ve denemeler burada listelenir. 26 gün sonra otomatik olarak silinir.</div>
-      <div id="gecmisGrid" style="display:flex;flex-direction:column;gap:10px"><div class="loading-txt">⏳ Yükleniyor...</div></div>
-    </div>
-
     <!-- YÖNETİM -->
     <div class="sec" id="sec-yonetim">
       <div class="sec-title" style="margin-bottom:18px">📊 Yönetim Paneli</div>
@@ -783,7 +773,7 @@ function buildTabs() {
   return t;
 }
 
-function showSec(id) { document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active")); document.getElementById("sec-"+id)?.classList.add("active"); }
+function showSec(id) { document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active")); document.getElementById("sec-"+id)?.classList.add("active"); if(id==="gecmis") renderGecmis(); }
 function isAdmin() { return currentRole==="admin"; }
 function isManager() { return ["admin","mudur"].includes(currentRole); }
 function isKoord() { return ["admin","mudur","koordinator"].includes(currentRole); }
@@ -943,7 +933,7 @@ function updateOgretmenSelects() {
 // ── LISTENERS ──
 function startListeners() {
   listenDuyurular(); listenNobetler(); listenSinavlar(); listenEtut(); listenDeneme(); loadProgram();
-  if (isManager()) { listenKullanicilar(); setTimeout(otomatikSil, 3000); }
+  if (isManager()) { listenKullanicilar(); listenGecmis(); setTimeout(otomatikSil, 3000); }
   if (isAdmin()) listenStats();
 }
 
