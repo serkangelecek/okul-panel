@@ -463,8 +463,14 @@
     <!-- KULLANICILAR -->
     <div class="sec" id="sec-kullanicilar">
       <div class="sec-header"><span class="sec-title">👥 Kullanıcı Yönetimi</span></div>
-      <div class="info-box">Sisteme giriş yapmış kullanıcıların rolleri ve branşları burada yönetilir.</div>
-      <div id="kullaniciList"><div class="loading-txt">⏳ Yükleniyor...</div></div>
+      <!-- Personel -->
+      <div class="card-title" style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;margin-bottom:10px">👨‍🏫 Personel</div>
+      <div class="info-box" style="margin-bottom:12px">Admin, Müdür, Koordinatör ve Öğretmenlerin rol ve branş yönetimi.</div>
+      <div id="personelList"><div class="loading-txt">⏳ Yükleniyor...</div></div>
+      <!-- Öğrenciler -->
+      <div class="card-title" style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;margin:20px 0 10px">👨‍🎓 Öğrenciler</div>
+      <div class="info-box" style="margin-bottom:12px">Sisteme kayıtlı öğrenciler sınıf ve şubeye göre listelenir.</div>
+      <div id="ogrenciKullaniciList"><div class="loading-txt">⏳ Yükleniyor...</div></div>
     </div>
 
     <!-- TANIMLAR -->
@@ -1398,10 +1404,16 @@ function listenKullanicilar() {
 }
 
 function renderKullanicilar() {
-  const el=document.getElementById("kullaniciList"); if(!el) return;
-  if (!kullanicilarData.length) { el.innerHTML='<div class="empty">Henüz kullanıcı yok</div>'; return; }
+  renderPersonel();
+  renderOgrenciKullanici();
+}
+
+function renderPersonel() {
+  const el=document.getElementById("personelList"); if(!el) return;
+  const personel = kullanicilarData.filter(u => u.rol !== "ogrenci");
+  if (!personel.length) { el.innerHTML='<div class="empty">Henüz personel yok</div>'; return; }
   let html='<div class="user-list-card">';
-  kullanicilarData.forEach(u => {
+  personel.forEach(u => {
     const isAdm = u.email===ADMIN_EMAIL;
     const showBrans = ["ogretmen","koordinator","mudur","admin"].includes(u.rol);
     const showSinif = u.rol==="ogrenci";
@@ -1445,6 +1457,45 @@ function renderKullanicilar() {
     html += '</div>';
   });
   html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderOgrenciKullanici() {
+  const el = document.getElementById("ogrenciKullaniciList"); if(!el) return;
+  // Hem users koleksiyonundaki öğrenciler hem ogrencilerData'yı birleştir
+  const sistemOgrenciler = kullanicilarData.filter(u => u.rol === "ogrenci");
+  // ogrencilerData'yı sınıfa göre grupla
+  const sinifGrup = {};
+  ogrencilerData.forEach(o => {
+    const s = o.sinif || "Sınıfsız";
+    if(!sinifGrup[s]) sinifGrup[s] = [];
+    sinifGrup[s].push(o);
+  });
+  if(!ogrencilerData.length && !sistemOgrenciler.length) {
+    el.innerHTML='<div class="empty"><div class="empty-icon">👨‍🎓</div>Henüz öğrenci kaydı yok</div>'; return;
+  }
+  let html = "";
+  Object.keys(sinifGrup).sort().forEach(sinif => {
+    const liste = sinifGrup[sinif].sort((a,b) => parseInt(a.numara||0)-parseInt(b.numara||0));
+    html += '<div class="card" style="margin-bottom:12px;padding:14px 18px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+    html += '<div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--accent2)">🏛️ '+sinif+' <span style="font-size:12px;color:var(--muted);font-weight:400">('+liste.length+' öğrenci)</span></div>';
+    html += '</div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>No</th><th>Ad Soyad</th><th>E-posta</th><th>Sisteme Girdi</th>'+(currentRole==="admin"?'<th></th>':'')+'</tr></thead><tbody>';
+    liste.forEach(o => {
+      const sistemde = sistemOgrenciler.find(u => u.email === o.email);
+      html += '<tr>';
+      html += '<td style="color:var(--muted);font-weight:700">'+(o.numara||"—")+'</td>';
+      html += '<td style="font-weight:600">';
+      if(sistemde?.photoURL) html += '<img src="'+sistemde.photoURL+'" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">';
+      html += o.ad+'</td>';
+      html += '<td style="font-size:12px;color:var(--muted)">'+o.email+'</td>';
+      html += '<td style="text-align:center">'+(sistemde?'<span style="color:var(--accent2);font-size:12px">✅ Evet</span>':'<span style="color:var(--muted);font-size:12px">—</span>')+'</td>';
+      if(currentRole==="admin") html += '<td><button class="btn btn-danger btn-sm" onclick="silOgrenci(\''+o.id+'\',\''+o.ad+'\')">🗑</button></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  });
   el.innerHTML = html;
 }
 
