@@ -1115,13 +1115,21 @@ function listenNobetler() {
   onSnapshot(collection(db,"nobetler"), snap => {
     const nobetler = snap.docs.map(d=>({id:d.id,...d.data()}));
     if (["ogretmen","koordinator"].includes(currentRole)) {
-      const mine = nobetler.filter(n=>n.ogretmenEmail===currentUser.email||n.ogretmen===currentUser.displayName);
+      const _email = (currentUser.email||"").toLowerCase();
+      const _ad = (currentUser.displayName||"").toLowerCase();
+      const mine = nobetler.filter(n=>
+        (n.ogretmenEmail||"").toLowerCase()===_email ||
+        (n.ogretmen||"").toLowerCase()===_ad ||
+        (n.ogretmen||"").toLowerCase().includes(_ad.split(" ")[0]) ||
+        _ad.includes((n.ogretmen||"").toLowerCase().split(" ")[0])
+      );
       const bugunGun2 = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][new Date().getDay()];
       const bugunNobet2 = mine.find(n=>n.gun===bugunGun2);
       let html = '<div class="card" style="border-color:rgba(147,197,253,0.2);margin-bottom:14px">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
       html += '<div class="card-title" style="margin:0">Benim Nöbetlerim</div>';
-      if(bugunNobet2) html += '<button class="btn btn-green btn-sm" id="nobetKonumBtn" onclick="nobetKonumKontrol()">📍 Konumumu Gönder</button>';
+      // Butonu her zaman göster — nöbet saatinde kontrol etsin
+      html += '<button class="btn btn-green btn-sm" id="nobetKonumBtn" onclick="nobetKonumKontrol()">📍 Konumumu Gönder</button>';
       html += '</div>';
       if (!mine.length) html += '<div style="color:var(--muted);font-size:13px">Bu hafta nöbetiniz yok.</div>';
       else mine.forEach(n => {
