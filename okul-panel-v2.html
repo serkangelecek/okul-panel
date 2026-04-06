@@ -1339,11 +1339,30 @@ window.etutExcelKaydet = async function(rows) {
       const baslik = String(r[0]||"").trim();
       const ders   = String(r[1]||"").trim();
       // Tarih: gg.aa.yyyy → yyyy-aa-gg dönüşümü
-      let tarihRaw = String(r[2]||"").trim();
-      let tarih = tarihRaw;
-      if(tarihRaw.includes(".")) {
-        const [tg,tm,ty] = tarihRaw.split(".");
-        tarih = (ty||"")+"-"+(tm||"").padStart(2,"0")+"-"+(tg||"").padStart(2,"0");
+      let tarihRaw = r[2];
+      let tarih = "";
+      if(tarihRaw !== undefined && tarihRaw !== "") {
+        // Excel sayısal tarih (örn: 46116) → ISO tarihe çevir
+        if(typeof tarihRaw === "number" || (!isNaN(tarihRaw) && !String(tarihRaw).includes("."))) {
+          const excelSayi = parseInt(tarihRaw);
+          // Excel epoch: 1 Ocak 1900 = 1, ancak Excel 1900'ü yanlış hesaplar (+2 gün offset)
+          const msPerDay = 86400000;
+          const excelEpoch = new Date(1899, 11, 30).getTime();
+          const d = new Date(excelEpoch + excelSayi * msPerDay);
+          tarih = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        } else {
+          const s = String(tarihRaw).trim();
+          if(s.includes(".")) {
+            // gg.aa.yyyy formatı
+            const [tg,tm,ty] = s.split(".");
+            tarih = (ty||"")+"-"+(tm||"").padStart(2,"0")+"-"+(tg||"").padStart(2,"0");
+          } else if(s.includes("-") && s.length===10) {
+            // yyyy-aa-gg formatı
+            tarih = s;
+          } else {
+            tarih = s;
+          }
+        }
       }
       const saat   = String(r[3]||"").trim();
       const yer    = String(r[4]||"").trim();
