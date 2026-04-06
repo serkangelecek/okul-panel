@@ -1116,11 +1116,30 @@ function listenNobetler() {
     const nobetler = snap.docs.map(d=>({id:d.id,...d.data()}));
     if (["ogretmen","koordinator"].includes(currentRole)) {
       const mine = nobetler.filter(n=>n.ogretmenEmail===currentUser.email||n.ogretmen===currentUser.displayName);
-      let html = '<div class="card" style="border-color:rgba(147,197,253,0.2);margin-bottom:14px"><div class="card-title">Benim Nöbetlerim</div>';
+      const bugunGun2 = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][new Date().getDay()];
+      const bugunNobet2 = mine.find(n=>n.gun===bugunGun2);
+      let html = '<div class="card" style="border-color:rgba(147,197,253,0.2);margin-bottom:14px">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+      html += '<div class="card-title" style="margin:0">Benim Nöbetlerim</div>';
+      if(bugunNobet2) html += '<button class="btn btn-green btn-sm" id="nobetKonumBtn" onclick="nobetKonumKontrol()">📍 Konumumu Gönder</button>';
+      html += '</div>';
       if (!mine.length) html += '<div style="color:var(--muted);font-size:13px">Bu hafta nöbetiniz yok.</div>';
-      else mine.forEach(n => { html += '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--card-border);font-size:13px"><span class="gun-badge">'+n.gun+'</span><span style="flex:1">'+n.konum+'</span><span style="color:var(--accent)">'+n.saat+'</span></div>'; });
+      else mine.forEach(n => {
+        const aktif2 = n.gun===bugunGun2;
+        html += '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--card-border);font-size:13px'+(aktif2?';background:rgba(16,185,129,0.05);border-radius:8px;padding:10px 8px':'')+'"><span class="gun-badge">'+n.gun+'</span><span style="flex:1;font-weight:'+(aktif2?'700':'400')+'">'+n.konum+'</span><span style="color:var(--accent)">'+n.saat+'</span>'+(aktif2?'<span id="benimKonumDurum" style="font-size:11px;margin-left:4px"></span>':'')+'</div>';
+      });
       html += '</div>';
       document.getElementById("nobetMyBox").innerHTML = html;
+      // Kendi konum durumunu dinle
+      if(bugunNobet2) {
+        onSnapshot(doc(db,"nobetKonum",currentUser.uid), snap=>{
+          const el = document.getElementById("benimKonumDurum"); if(!el) return;
+          if(!snap.exists()){el.innerHTML='';return;}
+          const d=snap.data();
+          const renk=d.durum==="yerinde"||d.durum==="okulda"?"#6ee7b7":"#fca5a5";
+          el.innerHTML='<span style="color:'+renk+';font-weight:700">'+(d.durum==="yerinde"||d.durum==="okulda"?"✅":"⚠️ "+d.durum)+'</span>';
+        });
+      }
     }
     let rows = "";
     GUNLER.forEach(gun => {
