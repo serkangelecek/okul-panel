@@ -1013,7 +1013,8 @@ window.addNobet = async () => {
 function listenSinavlar() {
   onSnapshot(collection(db,"sinavlar"), snap => {
     sinavData = snap.docs.map(d=>({id:d.id,...d.data()}));
-    let items = [...sinavData];
+    const _bugunS = new Date().toISOString().split('T')[0];
+    let items = sinavData.filter(s=>!s.tarih||s.tarih>=_bugunS);
     if (currentRole==="ogrenci"&&currentSinif) items = items.filter(s=>s.siniflar&&s.siniflar.includes(currentSinif));
     if (["ogretmen","koordinator"].includes(currentRole)) items = items.filter(s=>s.ogretmenEmail===currentUser.email||s.ogretmen===currentUser.displayName);
     items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
@@ -1065,7 +1066,8 @@ window.addSinav = async () => {
 function listenEtut() {
   onSnapshot(collection(db,"etut"), snap => {
     etutData = snap.docs.map(d=>({id:d.id,...d.data()}));
-    let items = [...etutData];
+    const _bugunE = new Date().toISOString().split('T')[0];
+    let items = etutData.filter(e=>!e.tarih||e.tarih>=_bugunE);
     if (currentRole==="ogrenci") items = items.filter(e=>e.ogrenciler&&e.ogrenciler.includes(currentUser.email));
     if (currentRole==="ogretmen") items = items.filter(e=>e.ogretmenEmail===currentUser.email||e.ogretmen===currentUser.displayName);
     items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
@@ -1212,7 +1214,8 @@ window.saveEtut = async function() {
 function listenDeneme() {
   onSnapshot(collection(db,"deneme"), snap => {
     denemeData = snap.docs.map(d=>({id:d.id,...d.data()}));
-    let items = [...denemeData];
+    const _bugunD = new Date().toISOString().split('T')[0];
+    let items = denemeData.filter(d=>!d.tarih||d.tarih>=_bugunD);
     if (currentRole==="ogrenci"&&currentSinif) items=items.filter(d=>d.siniflar&&d.siniflar.includes(currentSinif));
     if (currentRole==="ogretmen") items=items.filter(d=>d.ogretmenEmail===currentUser.email||d.ogretmen===currentUser.displayName);
     items.sort((a,b)=>(a.tarih||"").localeCompare(b.tarih||""));
