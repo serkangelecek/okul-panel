@@ -1312,7 +1312,18 @@ window.handleEtutExcel = async function(input) {
       prevHtml += '<div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Başlık</th><th>Ders</th><th>Tarih</th><th>Saat</th><th>Yer</th><th>Öğretmen</th><th>Öğrenciler (Ad Soyad)</th></tr></thead><tbody>';
       dataRows.slice(0,5).forEach(r=>{
         const ogrList = String(r[7]||"").split(",").map(x=>x.trim()).filter(Boolean);
-        prevHtml += '<tr><td>'+(r[0]||"—")+'</td><td>'+(r[1]||"—")+'</td><td>'+(r[2]||"—")+'</td><td>'+(r[3]||"—")+'</td><td>'+(r[4]||"—")+'</td><td>'+(r[5]||"—")+'</td><td style="font-size:11px">'+(ogrList.length?ogrList.join(", "):"—")+'</td></tr>';
+        // Önizlemede tarih dönüşümü
+        const excelTarihGoster = (v) => {
+          if(!v&&v!==0) return "—";
+          if(typeof v==="number"||(!isNaN(v)&&!String(v).includes("."))) {
+            const d=new Date(new Date(1899,11,30).getTime()+parseInt(v)*86400000);
+            return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();
+          }
+          const s=String(v).trim();
+          if(s.includes("-")&&s.length===10){const[y,m,g]=s.split("-");return g+"."+m+"."+y;}
+          return s;
+        };
+        prevHtml += '<tr><td>'+(r[0]||"—")+'</td><td>'+(r[1]||"—")+'</td><td>'+excelTarihGoster(r[2])+'</td><td>'+(r[3]||"—")+'</td><td>'+(r[4]||"—")+'</td><td>'+(r[5]||"—")+'</td><td style="font-size:11px">'+(ogrList.length?ogrList.join(", "):"—")+'</td></tr>';
       });
       if(dataRows.length>5) prevHtml += '<tr><td colspan="7" style="text-align:center;color:var(--muted)">...ve '+(dataRows.length-5)+' satır daha</td></tr>';
       prevHtml += '</tbody></table></div>';
